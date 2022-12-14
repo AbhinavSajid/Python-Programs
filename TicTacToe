@@ -1,0 +1,141 @@
+import turtle
+import time
+p,l=1,[[],[]]
+while True:
+    
+    # set up the turtle screen and turtle
+    wn,t=turtle.Screen(),turtle.Turtle()
+    wn.title("Tic-Tac-Toe")
+    t.speed(0)
+    t.ht()
+
+    # create the tic tac toe layout   
+    def t_forward(x):
+        t.pd()
+        t.fd(x)
+        t.pu()   
+    def draw_board():
+        t.pensize(5)
+        t.pu()
+        t.goto(-150,50)
+        t_forward(300)
+        t.goto(-150,-50)
+        t_forward(300)
+        t.goto(-50,150)
+        t.rt(90)
+        t_forward(300)
+        t.goto(50,150)
+        t_forward(300)
+        t.pu()
+        t.goto(105,-155)
+        t.pd()
+        style=('Arial',10,'italic')
+        t.write('Tic Tac Toe', font=style, align='center')
+        t.pu()
+        t.pencolor('blue')
+        t.pensize(7)
+        t.seth(135)
+    draw_board()
+    # define functions to draw 'x' and 'o'
+    def draw_x():
+        global p
+        t.fd(30)
+        t.seth(-45)
+        t.pd()
+        t.fd(57)
+        t.pu()
+        t.seth(180)
+        t.fd(40)
+        t.pd()
+        t.seth(45)
+        t.fd(57)
+        t.pu()
+        p=2
+    def draw_o():
+        global p
+        t.pencolor('red')
+        t.pensize(8)
+        t.goto(t.xcor()+18,t.ycor()-18)
+        t.pd()
+        t.circle(25)
+        t.pu()
+        t.pencolor('blue')
+        t.pensize(7)
+        t.seth(135)
+        p=1
+    # draw an 'x' or 'o' in whatever tile was clicked
+    def onclick(x,y):
+        global p
+        if -150<x<-51:col=1
+        elif -50<x<51:col=2
+        else:col=3
+        if -150<y<-51:row=3
+        elif -50<y<51:row=2
+        else:row=1
+        if -150<x<150 and -150<y<150 and col+(row-1)*3 not in l[0] and col+(row-1)*3 not in l[1]:
+            t.goto(col*100-200,200-row*100)
+            if p==1: draw_x()
+            else: draw_o()
+
+    t.screen.onclick(onclick)
+    wn.mainloop()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
