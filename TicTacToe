@@ -1,87 +1,119 @@
 import turtle
-p,l,c,g=1,[[],[0],[0,2,1],['o','x']],1,0
+p,l,c,g,s=1,[[],[0,0],[0,2,1],['o','x']],1,0,0
 d3={1:(1,1),2:(1,2),3:(1,3),4:(2,1),5:(2,2),6:(2,3),7:(3,1),8:(3,2),9:(3,3)}
 while True:
-    # set up the turtle screen and turtle
     wn,t=turtle.Screen(),turtle.Turtle()
     wn.title("Tic-Tac-Toe")
-    t.speed(0);t.ht()       
-    if p>2:break
-    
-    # create the tic tac toe layout   
+    wn.setup(width = 1.0, height = 1.0)
+    t.speed(0)
+    t.ht()
     def t_forward(x):
-        t.pd();t.fd(x);t.pu()
+        t.pd()
+        t.fd(x)
+        t.pu()
     def rectangle(h,l,col,fill):
-        t.fillcolor(fill);t.begin_fill();t.pencolor('red');t.seth(0);t.pd();t.fd(l)
-        t.rt(90);t.fd(h);t.rt(90);t.fd(l);t.rt(90);t.fd(h);t.end_fill();t.pu()
+        t.fillcolor(fill)
+        t.begin_fill()
+        t.pencolor(col)
+        t.seth(0)
+        t.pd()
+        t.fd(l)
+        t.rt(90)
+        t.fd(h)
+        t.rt(90)
+        t.fd(l)
+        t.rt(90)
+        t.fd(h)
+        t.end_fill()
+        t.pu()
     def computer():
-        u,z=0,1
-        for x in (0,1):
+        global d3
+        u,v=0,0
+        for x in (1,0):
             for i,j in(1,1),(4,1),(7,1),(7,-3),(8,-3),(9,-3),(9,-4),(7,-2):
-                if i in l[x] and i+j in l[x]:u=i+j+j
-                elif i+j in l[x] and i+j+j in l[x]:u=i
-                elif i in l[x] and i+j+j in l[x]:u=i+j
-        d,d1,x={0:1,1:7,2:7,3:7,4:3,5:1,6:1,7:3,8:1,9:1},{0:1,1:9,2:9,3:1,4:9,5:1,6:7,7:9,8:3,9:7},l[1][-1]
-        v=d[x]
-        if d[x]in l[0] or d[x] in l[1]:v=d1[x]
-        w=[u if u!=0 else 1,v,1,3,7,9,2,4,5,6,8]
-        print(w)
-        for i in w:
-            print(i)
-            if (i not in l[0]) and (i not in l[1]) and (0<i<10):
-                z=i
+                if i in l[x] and i+j in l[x] and i+j+j not in l[1] and i+j+j not in l[0]:u=i+j+j
+                elif i+j in l[x] and i+j+j in l[x] and i not in l[1] and i not in l[0]:u=i
+                elif i in l[x] and i+j+j in l[x] and i+j not in l[1] and i+j not in l[0]:u=i+j
+        d,x={0:(1,1),1:(7,9),2:(7,9),3:(7,1),4:(3,9),5:(1,1),6:(7,7),7:(3,9),8:(1,3),9:(1,7)},l[1][-1]
+        if len(l[1])==3:v=d[x][0]
+        else:v=d[x][1]
+        for i in [u,v,1,3,7,9,2,4,5,6,8]:
+            if (i not in l[0]) and (i not in l[1]) and (0<i<10) and s!=3:
+                z,v=d3[i],i
                 break
-        v=z
-        z=d3[z]
-        row,col=z[0],z[1]
-        t.goto(col*100-200,200-row*100)
+        t.goto(z[1]*100-200,200-z[0]*100)
         draw_x()
         l[0].append(v)
-        win()
+        win()    
     def draw_board():
+        global s,c
+        c=0
         t.clear()
         turtle.Screen().bgcolor('light blue')
         t.pencolor('black')
-        t.pensize(5);t.pu();t.seth(0)
-        t.goto(-150,50);t_forward(300)
-        t.goto(-150,-50);t_forward(300)
-        t.goto(-50,150);t.rt(90)
+        t.pensize(5)
+        t.pu()
+        t.seth(0)
+        t.goto(-150,50)
         t_forward(300)
-        t.goto(50,150);t_forward(300)
-        t.pu();t.goto(105,-155);t.pd()
-        style=('Arial',10,'italic')
-        t.write('Tic Tac Toe',font=style,align='center')
-        t.pu();t.pencolor('blue');t.pensize(7);t.seth(135)
+        t.goto(-150,-50)
+        t_forward(300)
+        t.goto(-50,150)
+        t.rt(90)
+        t_forward(300)
+        t.goto(50,150)
+        t_forward(300)
+        t.pu()
+        t.goto(105,-155)
+        t.pd()
+        t.write('Tic Tac Toe',font=('Arial',10,'italic'),align='center')
+        t.pu()
+        t.pencolor('blue')
+        t.seth(135)
+        s,c=2,1
         if g==2:draw_o()
-    def players():
+    def title_screen():
+        global s,c
+        c,s=1,0
+        t.pensize(5)
         t.pu()
         turtle.Screen().bgcolor('turquoise')
         t.goto(40,-180)
-        rectangle(70,180,'red','orange')
-        t.goto(-220,-180)
-        rectangle(70,180,'red','pink')
-        t.goto(130,-230)
-        t.pencolor('white')
-        style=('Arial',20)
-        t.write('Vs Player',font=style,align='center')
-        t.goto(-130,-230)
-        t.write('Vs Computer',font=style,align='center')
-    players()
-    
-    # define functions to draw 'x' and 'o'
+        rectangle(70,200,'blue','steelblue1')
+        t.goto(-240,-180)
+        rectangle(70,200,'purple','mediumpurple1')
+        t.goto(140,-230)
+        t.pencolor('navy blue')
+        t.write('Vs Player',font=('Arial',20,'bold'),align='center')
+        t.goto(-140,-230)
+        t.write('Vs Computer',font=('Arial',20,'bold'),align='center')
+        t.goto(0,0)
+        t.pencolor('darkgoldenrod1')
+        t.write('TIC TAC TOE',font=('Arial',70,'bold'),align='center')
+        s,c=1,1
+    title_screen()
     def draw_x():
         global p,c,g
-        c=0;turtle.Screen().bgcolor('pink')
-        t.fd(29);t.seth(-45);t.pd()
-        t.fd(57);t.pu();t.seth(180)
-        t.fd(40);t.pd();t.seth(45)
-        t.fd(57);t.pu()
-        win();p,c=2,1
+        c=0
+        t.pensize(8)
+        turtle.Screen().bgcolor('pink')
+        t.fd(29)
+        t.seth(-45)
+        t.pd()
+        t.fd(57)
+        t.pu()
+        t.seth(180)
+        t.fd(40)
+        t.pd()
+        t.seth(45)
+        t.fd(57)
+        t.pu()
+        win()
+        p,c=2,1
     def draw_o():
         global p,c,g
         if p==1 and g==2:
             computer()
-            p=2
         else:
             c=0
             turtle.Screen().bgcolor('light blue')
@@ -92,28 +124,26 @@ while True:
             t.circle(25)
             t.pu()
             t.pencolor('blue')
-            t.pensize(7)
             t.seth(135)
             win()
             p,c=1,1
-            computer()
-               
-    # check for a win and writes the result
+            if g==2:computer()
     def win():
+        global s,l
         for x in (0,1):
             for i,j in(1,1),(4,1),(7,1),(7,-3),(8,-3),(9,-3),(9,-4),(7,-2):
                 if i in l[x] and i+j in l[x] and i+j+j in l[x]:
-                    t.goto(0,200)
-                    style=('Arial',40,'italic')
-                    if p==1:
-                        t.color('blue')
-                        t.write('X WINS!',font=style,align='center')
-                    else:
+                    t.goto(0,180)
+                    c=0
+                    if p==2 and g==1:
                         t.color('red')
-                        t.write('O WINS!',font=style,align='center')
-                    turtle.Screen().bgcolor('white')
-                    t.color('yellow')
+                        t.write('O WINS!',font=('Arial',40,'bold'),align='center')
+                    elif p==1 or g==2 and p==2:
+                        t.color('blue')
+                        t.write('X WINS!',font=('Arial',40,'bold'),align='center')
+                    turtle.Screen().bgcolor('darkturquoise')
                     t.pu()
+                    s,c=3,1
                     x=1 if i in [1,4,7]else 3
                     if i in [2,5,8]:x=2
                     y=2 if i in[4,5,6]else 3
@@ -126,57 +156,38 @@ while True:
                     if i+j+j in[1,2,3]:y=1
                     t.speed(1)
                     t.pensize(5)
+                    t.pencolor('yellow')
                     t.goto(x*100-200,y*-100+200)
-        if len(l[0])>4 and turtle.Screen().bgcolor()!='white':
+        if len(l[0])>4 and s!=3:
+            c=0
             t.color('orange')
             t.goto(0,200)
-            style=('Arial',40,'italic')
-            t.write('DRAW!',font=style,align='center')
-            turtle.Screen().bgcolor('white')
-        if turtle.Screen().bgcolor()=='white':
-            t.pencolor('dark green')
+            t.write('DRAW',font=('Arial',40,'bold'),align='center')
+            turtle.Screen().bgcolor('darkturquoise')
+            c,s=1,3
+        if s==3:
             t.pensize(5)
             t.speed(0)
             t.pu()
-            t.goto(50,-190)
-            t.pd()
-            t.fillcolor('green')
-            t.begin_fill()
-            t.goto(210,-190)
-            t.goto(210,-240)
-            t.goto(50,-240)
-            t.goto(50,-190)
-            t.end_fill()
-            t.pu()
-            t.pencolor('red')
-            t.goto(-50,-190)
-            t.pd()
-            t.fillcolor('pink')
-            t.begin_fill()
-            t.goto(-210,-190)
-            t.goto(-210,-240)
-            t.goto(-50,-240)
-            t.goto(-50,-190)
-            t.end_fill()
-            t.pu()
-            t.goto(130,-230)
-            t.pencolor('white')
-            style=('Arial',20,'italic')
-            t.write('Play Again',font=style,align='center')
-            t.goto(-130,-230)
-            t.write('Exit Game',font=style,align='center')
-                                                  
-    # draw an 'x' or 'o' in whatever tile was clicked
+            t.goto((40,-180))
+            rectangle(70,200,'green4','palegreen2')
+            t.goto(-240,-180)
+            rectangle(70,200,'red','hotpink')
+            t.goto(140,-230)
+            t.pencolor('navy blue')
+            t.write('Play Again',font=('Arial',20,'bold'),align='center')
+            t.goto(-140,-230)
+            t.write('Exit Game',font=('Arial',20,'bold'),align='center')
     def onclick(x,y):
-        global p,c,l,g
-        if -150<x<-51:col=1
-        elif -50<x<51:col=2
-        else:col=3
-        if -150<y<-51:row=3
-        elif -50<y<51:row=2
-        else:row=1
-        if -150<x<150 and -150<y<150 and col+(row-1)*3 not in l[0] and col+(row-1)*3 not in l[1]:
-            if turtle.Screen().bgcolor()!='white'and c==1:
+        global p,c,l,g,s
+        if c==1:
+            if -150<x<-51:col=1
+            elif -50<x<51:col=2
+            else:col=3
+            if -150<y<-51:row=3
+            elif -50<y<51:row=2
+            else:row=1
+            if -150<x<150 and -150<y<150 and col+(row-1)*3 not in l[0] and col+(row-1)*3 not in l[1] and s==2:
                 t.goto(col*100-200,200-row*100)
                 if p==1 and g==1:
                     l[0].append(col+(row-1)*3)
@@ -184,28 +195,21 @@ while True:
                 else:
                     l[1].append(col+(row-1)*3)
                     draw_o()
-        if 50.0<x<210.0 and -240.0<y<-190.0 and turtle.Screen().bgcolor()=='white':
-            t.clear()
-            p,l,c=1,[[],[0],[0,2,1],['o','x']],1
-            players()
-        elif -210.0<x<-50 and -240.0<y<-190.0 and turtle.Screen().bgcolor()=='white':
-            p==3
-            turtle.bye()
-        elif -220.0<x<-40 and -250.0<y<-180.0 and turtle.Screen().bgcolor()=='turquoise':
-            g=2
-            draw_board()
-        elif 40.0<x<220.0 and -250.0<y<-180.0 and turtle.Screen().bgcolor()=='turquoise':
-            g=1
-            draw_board()
-            
+            if 40.0<x<240.0 and -250.0<y<-180.0 and (s,c)==(3,1):
+                c,g,s,x,y=0,0,0,0,0
+                t.clear()
+                p,l,c=1,[[],[0,0],[0,2,1],['o','x']],0
+                title_screen()
+            elif -240.0<x<-40 and -250.0<y<-180.0 and s==3:
+                p==3
+                turtle.bye()
+            if -240.0<x<-40 and -250.0<y<-180.0 and s==1:g=2
+            elif 40.0<x<240.0 and -250.0<y<-180.0 and s==1:
+                g=1
+            if g!=0 and s==1:draw_board()        
     t.screen.onclick(onclick)
     while p<3:
         wn.mainloop()
-
-
-
-
-
 
 
 
