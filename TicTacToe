@@ -87,16 +87,21 @@ while True:
         t.write('Vs Player',font=('Arial',20,'bold'),align='center')
         t.goto(-140,-230)
         t.write('Vs Computer',font=('Arial',20,'bold'),align='center')
-        t.goto(0,0)
+        t.goto(-220,-4)     
+        t.write('TIC',font=('Deja Vu Sans Mono',70,'bold'),align='center')
+        t.goto(-25,-4)     
+        t.write('TAC',font=('Deja Vu Sans Mono',70,'bold'),align='center')
+        t.goto(188,-4)     
+        t.write('TOE',font=('Deja Vu Sans Mono',70,'bold'),align='center')
+        t.goto(0,0) 
         t.pencolor('darkgoldenrod1')
-        t.write('TIC TAC TOE',font=('Arial',70,'bold'),align='center')
+        t.write('TIC TAC TOE',font=('Deja Vu Sans Mono',70,'normal'),align='center')
         s,c=1,1
     title_screen()
     def draw_x():
         global p,c,g
         c=0
         t.pensize(8)
-        turtle.Screen().bgcolor('pink')
         t.fd(29)
         t.seth(-45)
         t.pd()
@@ -109,6 +114,8 @@ while True:
         t.fd(57)
         t.pu()
         win()
+        if s!=3:
+            turtle.Screen().bgcolor('pink')
         p,c=2,1
     def draw_o():
         global p,c,g
@@ -116,7 +123,6 @@ while True:
             computer()
         else:
             c=0
-            turtle.Screen().bgcolor('light blue')
             t.pencolor('red')
             t.pensize(8)
             t.goto(t.xcor()+18,t.ycor()-18)
@@ -126,6 +132,8 @@ while True:
             t.pencolor('blue')
             t.seth(135)
             win()
+            if s!=3 and g==1:
+                turtle.Screen().bgcolor('light blue')
             p,c=1,1
             if g==2:computer()
     def win():
@@ -206,12 +214,10 @@ while True:
             if -240.0<x<-40 and -250.0<y<-180.0 and s==1:g=2
             elif 40.0<x<240.0 and -250.0<y<-180.0 and s==1:
                 g=1
-            if g!=0 and s==1:draw_board()        
+            if g!=0 and s==1:draw_board()
     t.screen.onclick(onclick)
     while p<3:
         wn.mainloop()
-
-
 
 
 
