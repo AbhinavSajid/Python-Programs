@@ -414,7 +414,6 @@ while True:
                 turn = 'b'
             else:
                 turn = 'w'
-            print(moves,current_move)
             update()
             pygame.display.update()
             
