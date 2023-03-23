@@ -16,6 +16,7 @@ available_moves = []
 en_passant = [False,False]
 moves = {}
 current_move = 0
+c = 1
 king = {'w':(5,8), 'b':(5,1)}
 # {'col':[king_moved,rook_moved,long available,short available]...
 can_castle = {'w':[True,True,False,False],'b':[True,True,False,False]}
@@ -120,6 +121,7 @@ def piece_moves(piece,square,checked_squares = []):
                 break
     # checks if king in check after your move
     if checked_squares != []:
+        removal = []
         for move in available_moves:
             if move in board:
                 picked_piece = [board[move]]
@@ -143,6 +145,9 @@ def piece_moves(piece,square,checked_squares = []):
                 del board[move]
             board[square] = piece
             if picked_piece[0] in check:
+                removal.append(move)
+        for move in removal:
+            if move in available_moves:
                 available_moves.remove(move)
     return available_moves, checked_square
 
@@ -177,26 +182,38 @@ def castle_rooks(color,startsq,endsq):
         else:
             del board[(1,startsq[1])]
             board[(4,startsq[1])] = color + 'R'
-        
+
+# checks for checkmate or stalemate
+def game_result():
+    if turn == 'w':
+        checked_squares = check_all('b')
+    else:
+        checked_squares = check_all('w')
+    l = []
+    for piece in board:
+        if board[piece][0] == turn:
+            l.append(piece)
+    for piece in l:
+        available_moves = piece_moves(board[piece],piece,checked_squares)[0]
+        if len(available_moves) > 0:
+            break
+    else:
+        my_font = pygame.font.SysFont('dejavuserif', int(sqsize))
+        if check == True:
+            text_surface = my_font.render('Checkmate', False, (255, 215, 0))
+        else:
+            text_surface = my_font.render('Stalemate', False, (255, 215, 0))
+        screen.blit(text_surface, (30,sqsize/2))
+        pygame.display.update()
+            
 # updates the images on screen
 def update():
     screen.fill('white')
-    image = pygame.image.load('pictures/Chess board.jpg').convert()
-    image = pygame.transform.scale(image, (board_size,board_size))
-    imagerect = image.get_rect() 
-    imagerect.center = ((infow/2, infoh/2))
-    screen.blit(image, imagerect)
-    flip_board = pygame.image.load('pictures/Flip board.png').convert()
-    flip_board = pygame.transform.scale(flip_board, (sqsize/2,sqsize/2))
-    flip_boardrect = flip_board.get_rect()
-    flip_boardrect.center = ((infow/2 + board_size/2 + sqsize*1.5, infoh/2))
+    screen.blit(board_image, board_imagerect)
     screen.blit(flip_board, flip_boardrect)
     if check == True:
-        image = pygame.image.load('pictures/Red square.png').convert()
-        image = pygame.transform.scale(image, (sqsize+1,sqsize+1))
-        imagerect = image.get_rect()
-        imagerect.center = (tile_cords[king[turn]])
-        screen.blit(image, imagerect)
+        redsq_imagerect.center = (tile_cords[king[turn]])
+        screen.blit(redsq_image, redsq_imagerect)
     for tile in board:
         image = pygame.image.load('pictures/' + board[tile] + '.png')
         image.convert()
@@ -210,10 +227,12 @@ def update():
         color = 'Black'
     my_font = pygame.font.SysFont('dejavuserif', int(sqsize/3))
     text_surface = my_font.render(color, False, (0, 0, 0))
-    screen.blit(text_surface, (10,10))
+    screen.blit(text_surface, (sqsize/2,sqsize/6))
+    
 # loop of events 
 while True:
     for event in pygame.event.get():
+        
         if event.type == pygame.QUIT:
             pygame.quit()
             exit()
@@ -229,32 +248,48 @@ while True:
                 xadd = infow/2 - board_size/2 - sqsize/2
                 yadd = infoh/2 - board_size/2 - sqsize/2
                 refresh_tilecords()
-                update()
                 pygame.display.update()
                 boardxrange = (infow/2-board_size/2,infow/2+board_size/2)
                 boardyrange = (infoh/2-board_size/2,infow/2+board_size/2)
-
+                grey_image = pygame.image.load('pictures/Grey square.jpg').convert()
+                grey_image = pygame.transform.scale(grey_image, (sqsize+1,sqsize+1))
+                grey_imagerect = grey_image.get_rect()
+                grey_image.set_alpha(128)
+                flip_board = pygame.image.load('pictures/Flip board.png').convert()
+                flip_board = pygame.transform.scale(flip_board, (sqsize/2,sqsize/2))
+                flip_boardrect = flip_board.get_rect()
+                flip_boardrect.center = ((infow/2 + board_size/2 + sqsize*1.5, infoh/2))
+                redsq_image = pygame.image.load('pictures/Red square.png').convert()
+                redsq_image = pygame.transform.scale(redsq_image, (sqsize+1,sqsize+1))
+                redsq_imagerect = redsq_image.get_rect()
+                board_image = pygame.image.load('pictures/Chess board.jpg').convert()
+                board_image = pygame.transform.scale(board_image, (board_size,board_size))
+                board_imagerect = board_image.get_rect() 
+                board_imagerect.center = ((infow/2, infoh/2))
+                game_result()
+                update()
+                pygame.display.update()
+                
+        if event.type == pygame.MOUSEBUTTONUP or event.type == pygame.MOUSEBUTTONDOWN:
+            buttons = pygame.mouse.get_pressed()
+            
         # when mouse is pressed it picks up a piece
-        elif event.type == pygame.MOUSEBUTTONDOWN and drag == False:
+        if event.type == pygame.MOUSEBUTTONDOWN and drag == False and buttons[0]:
             t = event.pos
             cord2tile = int((t[0]-boardxrange[0])/sqsize+1),int((t[1]-boardyrange[0])/sqsize+1)
             if flip == True:
                 cord2tile = (9 - cord2tile[0], 9 - cord2tile[1])
             if cord2tile in board and len(picked_piece) == 0:
-                image = pygame.image.load('pictures/Grey square.jpg').convert()
-                image = pygame.transform.scale(image, (sqsize,sqsize))
-                imagerect = image.get_rect()
-                imagerect.center = (tile_cords[cord2tile])
-                image.set_alpha(128)
-                screen.blit(image, imagerect)
+                grey_imagerect.center = (tile_cords[cord2tile])
                 drag_image = pygame.image.load('pictures/'+board[cord2tile]+'.png')
                 drag_image.convert()
                 drag_image = pygame.transform.scale(drag_image, (sqsize, sqsize))
                 drag_imagerect = drag_image.get_rect()
-                pygame.image.save( screen, 'surface.png' )
-                screenshot = pygame.image.load('surface.png').convert()
-                screenshotrect = screenshot.get_rect()
-                screenshotrect.center = ((0,0))
+                if current_move != len(moves):
+                    pygame.image.save( screen, 'surface.png' )
+                    screenshot = pygame.image.load('surface.png').convert()
+                    screenshotrect = screenshot.get_rect()
+                    screenshotrect.center = ((0,0))
                 drag = True
                 picked_piece.extend([cord2tile,board[cord2tile]])
                 if turn == 'w':
@@ -275,78 +310,85 @@ while True:
                     pygame.display.update()
                 
         # when mouse is released it places the piece if its a legal move        
-        elif event.type == pygame.MOUSEBUTTONUP:
+        elif event.type == pygame.MOUSEBUTTONUP and len(picked_piece) != 0:
             drag = False
             t = event.pos
             cord2tile = int((t[0]-boardxrange[0])/sqsize+1),int((t[1]-boardyrange[0])/sqsize+1)
             if flip == True:
                 cord2tile = 9-cord2tile[0], 9-cord2tile[1]
-            if len(picked_piece) != 0:
-                if legal_move(picked_piece[1],picked_piece[0],cord2tile,available_moves,check) == 'legal':
-                    # updates can_castle
-                    if picked_piece[1][1] == 'R':
-                        can_castle[picked_piece[1][0]][1] = False
-                    if cord2tile in [(1,8),(8,1)]:
-                        can_castle['w'][0] = False
-                    elif cord2tile in [(1,1),(8,1)]:
-                        can_castle['b'][1] = False
-                    # allows and checks for en_passant
-                    if picked_piece[1][1] == 'P':
-                        if picked_piece[0][0] - cord2tile[0] != 0: 
-                            if allowed(picked_piece[1],cord2tile) == True:
-                                del board[en_passant[1]]
-                        if cord2tile[1] - picked_piece[0][1] in [-2,2]:
-                            en_passant = [True,cord2tile]
-                        else:
-                            en_passant = [False,False]
-                    # updates dictionary of moves
-                    if current_move != len(moves):
-                        moves = {key:val for key, val in moves.items() if key <= current_move}
-                    if cord2tile in board:
-                        moves[len(moves)+1] = [picked_piece[1],picked_piece[0],cord2tile,board[cord2tile]]
+            if legal_move(picked_piece[1],picked_piece[0],cord2tile,available_moves,check) == 'legal':
+                # updates can_castle
+                if picked_piece[1][1] == 'R':
+                    can_castle[picked_piece[1][0]][1] = False
+                if cord2tile in [(1,8),(8,1)]:
+                    can_castle['w'][0] = False
+                elif cord2tile in [(1,1),(8,1)]:
+                    can_castle['b'][1] = False
+                # allows and checks for en_passant
+                if picked_piece[1][1] == 'P':
+                    if picked_piece[0][0] - cord2tile[0] != 0: 
+                        if allowed(picked_piece[1],cord2tile) == True:
+                            del board[en_passant[1]]
+                    if cord2tile[1] - picked_piece[0][1] in [-2,2]:
+                        en_passant = [True,cord2tile]
                     else:
-                        moves[len(moves)+1] = [picked_piece[1],picked_piece[0],cord2tile,None]
-                    current_move += 1
-                    # gets checked squares for the next move
-                    board[cord2tile] = picked_piece[1]
-                    check = False
-                    if picked_piece[1] == 'wK':
-                        king['w'] = cord2tile
-                        can_castle['w'][0] = False
-                        castle_rooks('w',picked_piece[0],cord2tile)
-                    elif picked_piece[1] == 'bK':
-                        king['b'] = cord2tile
-                        can_castle['b'][0] = False
-                        castle_rooks('b',picked_piece[0],cord2tile)
-                    if turn == 'w':
-                        turn = 'b'
-                        checked_squares = check_all('w')
-                        if king['b'] in checked_squares:
-                            check = True
-                    else:
-                        turn = 'w'
-                        checked_squares = check_all('b')
-                        if king['w'] in checked_squares:
-                            check = True
-                    # updates can_castle
-                    if turn == 'w':
-                        if not ((2,8) in board or (3,8) in board or (4,8) in board or (4,8) in checked_squares):
-                            can_castle['w'][2] = True
-                        if not ((6,8) in board or (7,8) in board or (6,8) in checked_squares):
-                            can_castle['w'][3] = True
-                    else:
-                        if not ((2,1) in board or (3,1) in board or (4,1) in board or (4,1) in checked_squares):
-                            can_castle['b'][2] = True
-                        if not ((6,1) in board or (7,1) in board or (6,1) in checked_squares):
-                            can_castle['b'][3] = True
-                    picked_piece.clear()
-                # if move is illegal it places it at its original square
+                        en_passant = [False,False]
+                # updates dictionary of moves
+                if current_move != len(moves):
+                    moves = {key:val for key, val in moves.items() if key <= current_move}
+                    
+                if cord2tile in board:
+                    moves[len(moves)+1] = [picked_piece[1],picked_piece[0],cord2tile,board[cord2tile]]
                 else:
-                    board[picked_piece[0]] = picked_piece[1]
-                    picked_piece.clear()
+                    moves[len(moves)+1] = [picked_piece[1],picked_piece[0],cord2tile,None]
+                current_move += 1
+                # gets checked squares for the next move
+                board[cord2tile] = picked_piece[1]
+                check = False
+                if picked_piece[1] == 'wK':
+                    king['w'] = cord2tile
+                    can_castle['w'][0] = False
+                    castle_rooks('w',picked_piece[0],cord2tile)
+                elif picked_piece[1] == 'bK':
+                    king['b'] = cord2tile
+                    can_castle['b'][0] = False
+                    castle_rooks('b',picked_piece[0],cord2tile)
+                if turn == 'w':
+                    turn = 'b'
+                    checked_squares = check_all('w')
+                    if king['b'] in checked_squares:
+                        check = True
+                else:
+                    turn = 'w'
+                    checked_squares = check_all('b')
+                    if king['w'] in checked_squares:
+                        check = True
+                # updates can_castle
+                if turn == 'w':
+                    can_castle['w'][2] = False
+                    can_castle['w'][3] = False
+                    if not ((2,8) in board or (3,8) in board or (4,8) in board or (4,8) in checked_squares):
+                        can_castle['w'][2] = True
+                    if not ((6,8) in board or (7,8) in board or (6,8) in checked_squares):
+                        can_castle['w'][3] = True
+                else:
+                    can_castle['b'][2] = False
+                    can_castle['b'][3] = False
+                    if not ((2,1) in board or (3,1) in board or (4,1) in board or (4,1) in checked_squares):
+                        can_castle['b'][2] = True
+                    if not ((6,1) in board or (7,1) in board or (6,1) in checked_squares):
+                        can_castle['b'][3] = True
+                picked_piece.clear()
                 update()
                 pygame.display.update()
-      
+                game_result()
+            # if move is illegal it places it at its original square
+            else:
+                board[picked_piece[0]] = picked_piece[1]
+                picked_piece.clear()
+                update()
+                pygame.display.update()
+
         # undo or redo a move           
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_RIGHT and current_move != len(moves):
@@ -364,11 +406,7 @@ while True:
                 del board[startsq]
                 board[endsq] = piece
                 check = False
-                if piece[0] == 'w':  
-                    if king['w'] in check_all('b'):
-                        check = True
-                    elif king['b'] in check_all('w'):
-                        check = True         
+                        
             elif event.key == pygame.K_LEFT and current_move != 0:
                 piece = moves[current_move][0]
                 startsq = moves[current_move][1]
@@ -414,13 +452,27 @@ while True:
                 turn = 'b'
             else:
                 turn = 'w'
+            if piece[0] == 'w':  
+                if king['w'] in check_all('b'):
+                    check = True
+                elif king['b'] in check_all('w'):
+                    check = True
             update()
+            game_result()
             pygame.display.update()
+            
+        if event.type == pygame.VIDEOEXPOSE or event.type == pygame.MOUSEBUTTONUP:
+            pygame.image.save( screen, 'surface.png' )
+            screenshot = pygame.image.load('surface.png').convert()
+            screenshotrect = screenshot.get_rect()
+            screenshotrect.center = ((0,0))
             
         # drag the pieces
         if drag == True:
             drag_imagerect.bottomright = (pygame.mouse.get_pos())
             screen.blit(screenshot, screenshotrect.center)
+            screen.blit(grey_image, grey_imagerect)
             screen.blit(drag_image, drag_imagerect.center)
             pygame.display.update()
+            
     clock.tick(240)
