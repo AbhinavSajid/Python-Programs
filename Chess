@@ -3,7 +3,7 @@ import pygame
 from sys import exit
 pygame.init()
 pygame.display.set_caption('Chess by Abhinav')
-icon = pygame.image.load('Pictures\Chess knight icon.png')
+icon = pygame.image.load('pictures/Chess knight icon.png')
 pygame.display.set_icon(icon)
 screen = pygame.display.set_mode((800, 400), pygame.RESIZABLE)
 clock = pygame.time.Clock()
@@ -16,9 +16,8 @@ available_moves = []
 en_passant = [False,False]
 moves = {}
 current_move = 0
-c = 1
 king = {'w':(5,8), 'b':(5,1)}
-# {'col':[king_moved,rook_moved,long available,short available]...
+# {'col':[king_moved,rook_moved,long available,short available]...c
 can_castle = {'w':[True,True,False,False],'b':[True,True,False,False]}
 check = False
 board = {
@@ -89,7 +88,7 @@ def piece_moves(piece,square,checked_squares = []):
                     checked_square.add(move)
                 else:
                     if i in [(0,-2),(0,2),(0,-1),(0,1)]:
-                        if available != True:
+                        if (available != True) or (square[0],square[1]+l[0][1]) in board:
                             break
                     else:
                         checked_square.add(move)
@@ -203,7 +202,7 @@ def game_result():
             text_surface = my_font.render('Checkmate', False, (255, 215, 0))
         else:
             text_surface = my_font.render('Stalemate', False, (255, 215, 0))
-        screen.blit(text_surface, (30,sqsize/2))
+        screen.blit(text_surface, (sqsize/2,sqsize/2))
         pygame.display.update()
             
 # updates the images on screen
@@ -251,23 +250,23 @@ while True:
                 pygame.display.update()
                 boardxrange = (infow/2-board_size/2,infow/2+board_size/2)
                 boardyrange = (infoh/2-board_size/2,infow/2+board_size/2)
-                grey_image = pygame.image.load('pictures/Grey square.jpg').convert()
+                grey_image = pygame.image.load('pictures/Grey Square.jpg').convert()
                 grey_image = pygame.transform.scale(grey_image, (sqsize+1,sqsize+1))
                 grey_imagerect = grey_image.get_rect()
                 grey_image.set_alpha(128)
-                flip_board = pygame.image.load('pictures/Flip board.png').convert()
+                flip_board = pygame.image.load('pictures/Flip Board.png').convert()
                 flip_board = pygame.transform.scale(flip_board, (sqsize/2,sqsize/2))
                 flip_boardrect = flip_board.get_rect()
                 flip_boardrect.center = ((infow/2 + board_size/2 + sqsize*1.5, infoh/2))
-                redsq_image = pygame.image.load('pictures/Red square.png').convert()
+                redsq_image = pygame.image.load('pictures/Red Square.png').convert()
                 redsq_image = pygame.transform.scale(redsq_image, (sqsize+1,sqsize+1))
                 redsq_imagerect = redsq_image.get_rect()
                 board_image = pygame.image.load('pictures/Chess board.jpg').convert()
                 board_image = pygame.transform.scale(board_image, (board_size,board_size))
                 board_imagerect = board_image.get_rect() 
                 board_imagerect.center = ((infow/2, infoh/2))
-                game_result()
                 update()
+                game_result()
                 pygame.display.update()
                 
         if event.type == pygame.MOUSEBUTTONUP or event.type == pygame.MOUSEBUTTONDOWN:
@@ -462,7 +461,7 @@ while True:
             pygame.display.update()
             
         if event.type == pygame.VIDEOEXPOSE or event.type == pygame.MOUSEBUTTONUP:
-            pygame.image.save( screen, 'surface.png' )
+            pygame.image.save( screen, 'surface.png')
             screenshot = pygame.image.load('surface.png').convert()
             screenshotrect = screenshot.get_rect()
             screenshotrect.center = ((0,0))
@@ -476,3 +475,10 @@ while True:
             pygame.display.update()
             
     clock.tick(240)
+
+
+
+
+
+
+
