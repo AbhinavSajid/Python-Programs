@@ -21,15 +21,43 @@ scrollbar.pack(side = 'right', fill = 'y')
 
 canvas.configure(yscrollcommand = scrollbar.set)
 canvas.bind('<Configure>',lambda e: canvas.configure(scrollregion = canvas.bbox('all')))
-
-main_frame = tk.Frame(canvas, height = 1000, width = 1520, bg = 'blue')
+main_frame = tk.Frame(canvas, height = 1000, width = 1520)
 main_frame.grid_propagate(False)
 canvas.create_window((0,0), window = main_frame, anchor = 'nw')
 
+#logo
+frame = tk.Frame(window)
+frame.place(relheight = 1, relwidth = 1)
+airline = tk.Label(frame, text = 'Skyline', font = ('Ariel',70), fg = 'blue')
+airline.place(relx = 0.5, rely = 0.4, anchor = 'center')
+slogan = tk.Label(frame, text = 'To Infinity And Beyond', font = ('Ariel',40), fg = 'blue')
+slogan.place(relx = 0.5, rely = 0.52, anchor = 'center')
+window.after(300, frame.destroy)
+
 #home page
-
-
-
+main_frame.grid_rowconfigure(10, weight=1)
+main_frame.grid_columnconfigure(0, weight=1)
+frame = tk.Frame(main_frame, bg = 'blue',height = 50)
+frame.grid(row = 0, column = 0, sticky = 'ew')
+frame.grid_propagate(False)
+airline = tk.Label(frame, text = 'Skyline', fg = 'white', bg = 'blue', font = ('Ariel',25))
+airline.grid(row=1,column=1)
+slogan = tk.Label(frame, text = 'To Infinity And Beyond', font = ('Ariel',10,'bold'), fg = 'white', bg = 'blue')
+slogan.grid(row = 1, column = 2, padx = 5, pady = (0,5))
+book = tk.Button(frame,text = 'Book flight', bg = 'blue', fg = 'white', height = 1, relief = 'flat', font = ('Ariel', 11))
+book.grid(column = 4, row = 1, padx = (900,0), pady = (7,0))
 
 
 window.mainloop()
+
+
+
+
+
+
+
+
+
+
+
+
