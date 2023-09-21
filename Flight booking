@@ -1,54 +1,241 @@
-import tkinter as tk
-from tkinter import ttk
+from tkinter import *
+import time
+import parser as pr
 
 #window
-window = tk.Tk(screenName=None, baseName=None, className='Tk', useTk=1)
+window = Tk(screenName=None, baseName=None, className='Tk', useTk=1)
 window.bind('<Escape>', lambda event: window.destroy())
 window.title('Flight booking')
-window.geometry('1600x900')
+window.geometry('1366x768')
 window.minsize(960, 540)
 #window.attributes('-fullscreen', True)
 
-#scroll bar
-container = tk.Frame(window)
-container.pack(fill = 'both', expand = True)
+class Gui:
+    def __init__(self):
+        self.container = Frame(window)
+        self.container.pack(fill = 'both', expand = True)
+        self.container.grid_columnconfigure(1, weight = 1)
+        self.container.grid_rowconfigure(2, weight = 1)
+        self.days = {1: 31, 2: 28, 3: 31, 4: 30, 5: 31, 6: 30 ,
+        7: 31, 8: 31, 9: 30, 10: 31, 11: 30, 12: 31}
+        self.month_num = ['January', 'February', 'March', 'April', 'May', 'June', 'July',
+        'August', 'September', 'October', 'November', 'December']
+        self.to_ = self.from_ = self.full_date = ''
+        
+    def add_text(self, widget, text, color):
+        widget.delete(0, "end")
+        widget.config(fg = color)
+        widget.insert(0, text)
+        
+    def logo(self):
+        pass
+    
+    def create_tab(self):
+        self.tab = Frame(self.container, height = 70 , bg = 'blue')
+        self.tab.grid(row = 1, column = 1, sticky = 'new')
+        
+        self.airline = Label(self.tab, text = 'Skyline', fg = 'white', bg = 'blue', font = ('Ariel', 25))
+        self.airline.grid(row=1,column=1)
+        
+        self.slogan = Label(self.tab, text='Discover the world', font=('Ariel',10,'bold'), fg='white', bg='blue')
+        self.slogan.grid(row=1,column=2,padx=5,pady=(0,5))
 
-canvas = tk.Canvas(container,)
-canvas.pack(side = 'left', fill = 'both', expand = True)
+        self.home = Button(self.tab, text = 'Home page', bg = 'blue', fg = 'white', height = 1,
+        relief = 'flat', font = ('Ariel', 12), command = self.home_page)
+        self.home.grid(column = 3, row = 1, padx = (500,0), pady = 10)
+        
+        self.book = Button(self.tab, text = 'Book flight', bg = 'blue', fg = 'white', height = 1,
+        relief = 'flat', font = ('Ariel', 12), command = self.book_flight)
+        self.book.grid(column = 4, row = 1, padx = (20,0), pady = 10)
+        self.flights = Button(self.tab, text = 'Flights', bg = 'blue', fg = 'white', height = 1,
+        relief = 'flat', font = ('Ariel', 12), command = self.search_flights)
+        self.flights.grid(column = 5, row = 1, padx = (20,0), pady = 10)
+    #home page
+    def home_page(self):
+        for item in self.container.winfo_children():
+            item.destroy()
+        self.create_tab()
+        
+        self.display = Frame(self.container, bg = 'light blue', height = 550)
+        self.display.grid(row = 2, column = 1, pady = (10,0), sticky = 'we', padx = 110)
+        self.display.pack_propagate(False)
 
-scrollbar = ttk.Scrollbar(container, orient = 'vertical', command = canvas.yview)
-scrollbar.pack(side = 'right', fill = 'y')
+        self.pic1 = Label(self.display, bg = 'light blue', fg = 'white',
+        text = 'Pic of aeroplane', font = ('Ariel',30,'bold'))
+        self.pic1.pack(expand = 'True', fill = 'both')
+        
+    def pick_date(self):
+        self.frame1 = Frame(self.tab2, bg = 'grey')
+        self.frame1.grid(row = 2, column = 3, sticky = 'nsew', pady = (5,0))
+        self.day_spinbox = Spinbox(self.frame1, from_ = 1, to = 31, font = ('Ariel', 15),
+        width = 2, wrap = True, command = self.update_date)
+        self.day_spinbox.grid(row = 1, column = 1, padx = (60,4), sticky = ('ns'))
+        months = ['January', 'February', 'March', 'April', 'May', 'June', 'July',
+        'August', 'September', 'October', 'November', 'December']
+        self.month_spinbox = Spinbox(self.frame1, values = self.month_num,
+        font = ('Ariel', 15), width = 9, command = self.update_date)
+        self.month_spinbox.grid(row = 1, column = 2, padx = 4)
+        self.year_spinbox = Spinbox(self.frame1, from_ = time.localtime()[0], to = time.localtime()[0] + 1,
+        font = ('Ariel', 15),width = 4, wrap = True, command = self.update_date)
+        self.year_spinbox.grid(row = 1, column = 3, padx = 4)
+        
+    def valid_destination(self):
+        inst = pr.sql()
+        self.to_ = self.to_var.get().strip().capitalize()
+        self.from_ = self.from_var.get().strip().capitalize()
+        if self.to_ == self.from_:
+            self.to_ = self.from_ = ''
+            return False
+        if self.to_ in inst.fetch_countries() and self.from_ in inst.fetch_countries():
+            return True
 
-canvas.configure(yscrollcommand = scrollbar.set)
-canvas.bind('<Configure>',lambda e: canvas.configure(scrollregion = canvas.bbox('all')))
-main_frame = tk.Frame(canvas, height = 1000, width = 1520)
-main_frame.grid_propagate(False)
-canvas.create_window((0,0), window = main_frame, anchor = 'nw')
+    def valid_date(self):
+        month = self.travel_date_entry.get()[5:-5]
+        year = self.travel_date_entry.get()[-4:]
+        if not (year == str(time.localtime()[0]) or year == str(time.localtime()[0] + 1)):
+            return False
+        self.days[2] == '28'
+        if int(year)%4 == 0:
+            self.days[2] = '29'
+        if month in self.month_num:
+            month = self.month_num.index(month) + 1
+        else:
+            return False
+        day = int(self.travel_date_entry.get()[0:2])
+        if day > int(self.days[month]):
+            return False
+        if year == str(time.localtime()[0]):
+            if month == time.localtime()[1]:
+                if day <= time.localtime()[2]:
+                    return False
+            if month < time.localtime()[1]:
+                return False
+        self.full_date = self.travel_date_entry.get()
+        return True
+        
+    def update_date(self):
+        self.days[2] = 28
+        if int(self.year_spinbox.get())%4 == 0:
+            self.days[2] = 29
+        self.travel_date_entry.delete(0, 'end')
+        day = int(self.day_spinbox.get())
+        if day > self.days[self.month_num.index(self.month_spinbox.get()) + 1]:
+            day = self.days[self.month_spinbox.get()]
+        ordinals = {1: 'st ', 2: 'nd ', 3: 'rd '}
+        ordinal = 'th '
+        if day in ordinals:
+            ordinal = ordinals[day]
+        if day < 10:
+            day = ' ' + str(day)
+        self.travel_date_entry.insert(1, str(day) + ordinal +
+        self.month_spinbox.get() + ' ' + self.year_spinbox.get())
+        self.date_month = self.month_num.index(self.month_spinbox.get()) + 1
+        self.date_day = day
+        self.date_year = int(self.year_spinbox.get())
 
-#logo
-frame = tk.Frame(window)
-frame.place(relheight = 1, relwidth = 1)
-airline = tk.Label(frame, text = 'Skyline', font = ('Ariel',70), fg = 'blue')
-airline.place(relx = 0.5, rely = 0.4, anchor = 'center')
-slogan = tk.Label(frame, text = 'To Infinity And Beyond', font = ('Ariel',40), fg = 'blue')
-slogan.place(relx = 0.5, rely = 0.52, anchor = 'center')
-window.after(300, frame.destroy)
+    #booking frame
+    def book_flight(self):
+        for item in self.container.winfo_children():
+            item.destroy()
+        self.create_tab()
+        frame = Frame(self.container, bg = 'grey', height = 200)
+        frame.grid(row = 1, column = 1, pady = (100, 0), sticky = 'we', padx = 110)
+        frame.grid_columnconfigure(1, weight = 1)
+        frame.grid_rowconfigure(2, weight = 1)
+        frame.grid_propagate(False)
 
-#home page
-main_frame.grid_rowconfigure(10, weight=1)
-main_frame.grid_columnconfigure(0, weight=1)
-frame = tk.Frame(main_frame, bg = 'blue',height = 50)
-frame.grid(row = 0, column = 0, sticky = 'ew')
-frame.grid_propagate(False)
-airline = tk.Label(frame, text = 'Skyline', fg = 'white', bg = 'blue', font = ('Ariel',25))
-airline.grid(row=1,column=1)
-slogan = tk.Label(frame, text = 'To Infinity And Beyond', font = ('Ariel',10,'bold'), fg = 'white', bg = 'blue')
-slogan.grid(row = 1, column = 2, padx = 5, pady = (0,5))
-book = tk.Button(frame,text = 'Book flight', bg = 'blue', fg = 'white', height = 1, relief = 'flat', font = ('Ariel', 11))
-book.grid(column = 4, row = 1, padx = (900,0), pady = (7,0))
+        tab1 = Frame(frame, bg = 'blue', height = 70)
+        tab1.grid(sticky = 'new', row = 1, column = 1)
+        tab1.grid_propagate(False)
 
-
+        from_ = Label(tab1, text = 'From', font = ('Ariel', 20), bg = 'blue', fg = 'white')
+        from_.grid(column = 1, row = 1, pady = 15, padx = (120))
+        to = Label(tab1, text = 'To', font = ('Ariel', 20), bg = 'blue', fg = 'white')
+        to.grid(column = 2, row = 1, padx = (150, 0))
+        travel_date = Label(tab1, text = 'Travel Date', font = ('Ariel', 20), bg = 'blue', fg = 'white')
+        travel_date.grid(column = 3, row = 1, padx = (250, 0))
+        
+        self.tab2 = Frame(frame, bg = 'grey')
+        self.tab2.grid(sticky = 'nsew', row = 2, column = 1)
+        self.tab2.grid_propagate(False)
+        def temp(widget, text, mode, xcor):
+            if mode == 1:
+                self.frame2 = Frame(self.container)
+                self.frame2.place(x = xcor, y = 250)
+                inst = pr.sql()
+                country = inst.fetch_countries()
+                if self.to_var.get().strip() in country:
+                    country.remove(self.to_var.get().strip())
+                if self.from_var.get().strip() in country:
+                    country.remove(self.from_var.get().strip())
+                button_dict = {}
+                for i in country:
+                    def action(x = i): 
+                        widget.delete(0, 'end')
+                        widget.insert(0, ' ' + x)
+                        self.frame2.destroy()
+                    button_dict[i] = Button(self.frame2, text = i, font = ('Ariel', 15),
+                    width = 10, command = action)
+                    button_dict[i].grid(column = 1, row = country.index(i))
+            if mode == 1 and widget.get() == text:
+                widget.delete(0, "end")
+                widget.config(fg = 'black')
+            elif widget.get() == '':
+                widget.config(fg = 'grey')
+                widget.insert(0, text)
+            if mode == 2:
+                self.valid_destination()
+                self.frame2.destroy()
+        def temp_travel(mode, text):
+            if mode == 1:
+                self.pick_date()
+                if not self.valid_date():
+                    self.travel_date_entry.delete(0, "end")
+                    self.travel_date_entry.config(fg = 'black')
+            if mode == 2:
+                if not self.valid_date():
+                    self.travel_date_entry.delete(0, "end")
+                    self.travel_date_entry.config(fg = 'grey')
+                    self.travel_date_entry.insert(0, text)    
+                for item in self.frame1.winfo_children():
+                    item.destroy()
+        self.from_var = StringVar()
+        from_entry = Entry(self.tab2, font = ('Ariel', 20), fg = 'grey', textvariable = self.from_var)
+        from_entry.grid(row = 1, column = 1,pady = (40,0), padx = (20, 0))
+        from_entry.insert(0, ' from')
+        from_entry.bind("<FocusIn>", lambda self: temp(from_entry, ' from', 1, 170))
+        from_entry.bind("<FocusOut>", lambda self: temp(from_entry, ' from', 2, 170))
+        self.to_var = StringVar()
+        to_entry = Entry(self.tab2, font = ('Ariel', 20), fg = 'grey', textvariable = self.to_var)
+        to_entry.grid(row = 1, column = 2, padx = (20, 0), pady = (40,0))
+        to_entry.insert(0, ' to')
+        to_entry.bind("<FocusIn>", lambda self: temp(to_entry, ' to', 1, 500))
+        to_entry.bind("<FocusOut>", lambda self: temp(to_entry, ' to', 2, 500))
+        self.travel_date_entry = Entry(self.tab2, font = ('Ariel', 20), fg = 'grey')
+        self.travel_date_entry.grid(row = 1, column = 3, padx = (30, 0), pady = (40,0))
+        self.travel_date_entry.insert(0, ' dd/mm/yyyy')
+        self.travel_date_entry.bind("<FocusIn>", lambda self: temp_travel(1, ' dd/mm/yyyy'))
+        self.travel_date_entry.bind("<FocusOut>", lambda self: temp_travel(2, ' dd/mm/yyyy'))
+        search = Button(self.tab2, text = 'Search', height = 2, width = 10, command = self.search_flights)
+        search.grid(row = 1, column = 4, padx = (30,0), pady = (40,0))
+        if self.full_date != '':
+            self.add_text(self.travel_date_entry, self.full_date, 'black')
+        if self.to_ != '' and self.from_ != '':
+            self.add_text(to_entry, ' ' + self.to_, 'black')
+            self.add_text(from_entry, ' ' + self.from_, 'black')
+            
+    def search_flights(self):
+        if self.to_ != '' and self.from_ != '' and self.full_date != '':
+            for item in self.container.winfo_children():
+                item.destroy()
+            self.create_tab()
+            frame1 = Frame(self.container, height = 100, bg = 'light blue')
+            frame1.grid(row = 2, column = 1, sticky = 'we', padx = 110)
+mygui = Gui()
+mygui.home_page()
+    
 window.mainloop()
+
 
 
 
