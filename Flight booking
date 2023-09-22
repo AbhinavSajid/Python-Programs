@@ -1,9 +1,12 @@
 from tkinter import *
+from PIL import Image, ImageTk
 import time
+import random
 import parser as pr
 
 #window
 window = Tk(screenName=None, baseName=None, className='Tk', useTk=1)
+window.wm_attributes("-transparentcolor", '#eeefff')
 window.bind('<Escape>', lambda event: window.destroy())
 window.title('Flight booking')
 window.geometry('1366x768')
@@ -21,74 +24,107 @@ class Gui:
         self.month_num = ['January', 'February', 'March', 'April', 'May', 'June', 'July',
         'August', 'September', 'October', 'November', 'December']
         self.to_ = self.from_ = self.full_date = ''
+        self.in_flights = False
         
     def add_text(self, widget, text, color):
         widget.delete(0, "end")
-        widget.config(fg = color)
-        widget.insert(0, text)
+        if color is not False:
+            widget.config(fg = color)
+        if text is not False:
+            widget.insert(0, text)
         
     def logo(self):
-        pass
+        self.logo_image = ImageTk.PhotoImage(Image.open('images/Skyline_logo.png'))
+        label = Label(self.container, image = self.logo_image)
+        label.pack(fill = 'both', expand =  True)
+        def proceed():
+            label.destroy()
+            self.create_tab()
+            self.home_page()
+        label.after(2500, proceed)
     
     def create_tab(self):
+        for item in self.container.winfo_children():
+            item.destroy()
         self.tab = Frame(self.container, height = 70 , bg = 'blue')
         self.tab.grid(row = 1, column = 1, sticky = 'new')
+
+        self.main_frame = Frame(self.container)
+        self.main_frame.grid(row = 2, column = 1, sticky = 'nsew')
+        self.main_frame.grid_propagate(False)
+        self.main_frame.grid_columnconfigure(1, weight = 1)
+        self.main_frame.grid_rowconfigure(2, weight = 1)
         
         self.airline = Label(self.tab, text = 'Skyline', fg = 'white', bg = 'blue', font = ('Ariel', 25))
-        self.airline.grid(row=1,column=1)
+        self.airline.grid(row=1,column=2)
         
         self.slogan = Label(self.tab, text='Discover the world', font=('Ariel',10,'bold'), fg='white', bg='blue')
-        self.slogan.grid(row=1,column=2,padx=5,pady=(0,5))
+        self.slogan.grid(row=1,column=3,padx=5,pady=(0,5))
 
+        file = 'images/globe_logo.gif'
+        frame_count = Image.open(file).n_frames
+        frames = [PhotoImage(file = file,format = f'gif -index {i}') for i in range(frame_count)]
+        count = 0
+        logo_label = Label(self.tab, image = '', bg = 'blue')
+        logo_label.grid(column = 1, row = 1)
+        def animation(count):
+            img = frames[count]
+            logo_label.configure(image = img)
+            count += 1
+            if count == frame_count:
+                count = 0
+            window.after(100, animation, count)
+        animation(0)
+        
         self.home = Button(self.tab, text = 'Home page', bg = 'blue', fg = 'white', height = 1,
         relief = 'flat', font = ('Ariel', 12), command = self.home_page)
-        self.home.grid(column = 3, row = 1, padx = (500,0), pady = 10)
+        self.home.grid(column = 4, row = 1, padx = (500,0), pady = 10)
         
         self.book = Button(self.tab, text = 'Book flight', bg = 'blue', fg = 'white', height = 1,
         relief = 'flat', font = ('Ariel', 12), command = self.book_flight)
-        self.book.grid(column = 4, row = 1, padx = (20,0), pady = 10)
+        self.book.grid(column = 5, row = 1, padx = (20,0), pady = 10)
+        
         self.flights = Button(self.tab, text = 'Flights', bg = 'blue', fg = 'white', height = 1,
         relief = 'flat', font = ('Ariel', 12), command = self.search_flights)
-        self.flights.grid(column = 5, row = 1, padx = (20,0), pady = 10)
+        self.flights.grid(column = 6, row = 1, padx = (20,0), pady = 10)
+        
     #home page
     def home_page(self):
-        for item in self.container.winfo_children():
+        for item in self.main_frame.winfo_children():
             item.destroy()
-        self.create_tab()
-        
-        self.display = Frame(self.container, bg = 'light blue', height = 550)
-        self.display.grid(row = 2, column = 1, pady = (10,0), sticky = 'we', padx = 110)
-        self.display.pack_propagate(False)
 
-        self.pic1 = Label(self.display, bg = 'light blue', fg = 'white',
-        text = 'Pic of aeroplane', font = ('Ariel',30,'bold'))
-        self.pic1.pack(expand = 'True', fill = 'both')
+        self.sunset_image = ImageTk.PhotoImage(Image.open('images/airplane_sunset.png'))
+        #self.sunset_image = PhotoImage(file = 'images/airplane_sunset.png')
+        self.display = Label(self.main_frame, image = self.sunset_image, height = 550)
+        self.display.grid(row = 2, column = 1, pady = (10,0), sticky = 'we', padx = 110)
         
     def pick_date(self):
         self.frame1 = Frame(self.tab2, bg = 'grey')
         self.frame1.grid(row = 2, column = 3, sticky = 'nsew', pady = (5,0))
+        
         self.day_spinbox = Spinbox(self.frame1, from_ = 1, to = 31, font = ('Ariel', 15),
         width = 2, wrap = True, command = self.update_date)
         self.day_spinbox.grid(row = 1, column = 1, padx = (60,4), sticky = ('ns'))
-        months = ['January', 'February', 'March', 'April', 'May', 'June', 'July',
-        'August', 'September', 'October', 'November', 'December']
+        
         self.month_spinbox = Spinbox(self.frame1, values = self.month_num,
         font = ('Ariel', 15), width = 9, command = self.update_date)
         self.month_spinbox.grid(row = 1, column = 2, padx = 4)
+        
         self.year_spinbox = Spinbox(self.frame1, from_ = time.localtime()[0], to = time.localtime()[0] + 1,
         font = ('Ariel', 15),width = 4, wrap = True, command = self.update_date)
         self.year_spinbox.grid(row = 1, column = 3, padx = 4)
         
     def valid_destination(self):
         inst = pr.sql()
-        self.to_ = self.to_var.get().strip().capitalize()
         self.from_ = self.from_var.get().strip().capitalize()
+        self.to_ = self.to_var.get().strip().capitalize()
         if self.to_ == self.from_:
-            self.to_ = self.from_ = ''
             return False
         if self.to_ in inst.fetch_countries() and self.from_ in inst.fetch_countries():
             return True
-
+        else:
+            return False
+        
     def valid_date(self):
         month = self.travel_date_entry.get()[5:-5]
         year = self.travel_date_entry.get()[-4:]
@@ -135,10 +171,9 @@ class Gui:
 
     #booking frame
     def book_flight(self):
-        for item in self.container.winfo_children():
+        for item in self.main_frame.winfo_children():
             item.destroy()
-        self.create_tab()
-        frame = Frame(self.container, bg = 'grey', height = 200)
+        frame = Frame(self.main_frame, bg = 'grey', height = 200)
         frame.grid(row = 1, column = 1, pady = (100, 0), sticky = 'we', padx = 110)
         frame.grid_columnconfigure(1, weight = 1)
         frame.grid_rowconfigure(2, weight = 1)
@@ -160,7 +195,7 @@ class Gui:
         self.tab2.grid_propagate(False)
         def temp(widget, text, mode, xcor):
             if mode == 1:
-                self.frame2 = Frame(self.container)
+                self.frame2 = Frame(self.main_frame)
                 self.frame2.place(x = xcor, y = 250)
                 inst = pr.sql()
                 country = inst.fetch_countries()
@@ -171,32 +206,25 @@ class Gui:
                 button_dict = {}
                 for i in country:
                     def action(x = i): 
-                        widget.delete(0, 'end')
-                        widget.insert(0, ' ' + x)
+                        self.add_text(widget, ' ' + x, False)
                         self.frame2.destroy()
                     button_dict[i] = Button(self.frame2, text = i, font = ('Ariel', 15),
                     width = 10, command = action)
                     button_dict[i].grid(column = 1, row = country.index(i))
             if mode == 1 and widget.get() == text:
-                widget.delete(0, "end")
-                widget.config(fg = 'black')
+                self.add_text(widget, False, 'black')
             elif widget.get() == '':
-                widget.config(fg = 'grey')
-                widget.insert(0, text)
+                self.add_text(widget, text, 'grey')
             if mode == 2:
-                self.valid_destination()
                 self.frame2.destroy()
         def temp_travel(mode, text):
             if mode == 1:
                 self.pick_date()
                 if not self.valid_date():
-                    self.travel_date_entry.delete(0, "end")
-                    self.travel_date_entry.config(fg = 'black')
+                    self.add_text(self.travel_date_entry, False, 'black')
             if mode == 2:
                 if not self.valid_date():
-                    self.travel_date_entry.delete(0, "end")
-                    self.travel_date_entry.config(fg = 'grey')
-                    self.travel_date_entry.insert(0, text)    
+                    self.add_text(self.travel_date_entry, text, 'grey')
                 for item in self.frame1.winfo_children():
                     item.destroy()
         self.from_var = StringVar()
@@ -205,46 +233,39 @@ class Gui:
         from_entry.insert(0, ' from')
         from_entry.bind("<FocusIn>", lambda self: temp(from_entry, ' from', 1, 170))
         from_entry.bind("<FocusOut>", lambda self: temp(from_entry, ' from', 2, 170))
+
         self.to_var = StringVar()
         to_entry = Entry(self.tab2, font = ('Ariel', 20), fg = 'grey', textvariable = self.to_var)
         to_entry.grid(row = 1, column = 2, padx = (20, 0), pady = (40,0))
         to_entry.insert(0, ' to')
         to_entry.bind("<FocusIn>", lambda self: temp(to_entry, ' to', 1, 500))
         to_entry.bind("<FocusOut>", lambda self: temp(to_entry, ' to', 2, 500))
+        
         self.travel_date_entry = Entry(self.tab2, font = ('Ariel', 20), fg = 'grey')
         self.travel_date_entry.grid(row = 1, column = 3, padx = (30, 0), pady = (40,0))
         self.travel_date_entry.insert(0, ' dd/mm/yyyy')
         self.travel_date_entry.bind("<FocusIn>", lambda self: temp_travel(1, ' dd/mm/yyyy'))
         self.travel_date_entry.bind("<FocusOut>", lambda self: temp_travel(2, ' dd/mm/yyyy'))
+        
         search = Button(self.tab2, text = 'Search', height = 2, width = 10, command = self.search_flights)
         search.grid(row = 1, column = 4, padx = (30,0), pady = (40,0))
         if self.full_date != '':
             self.add_text(self.travel_date_entry, self.full_date, 'black')
-        if self.to_ != '' and self.from_ != '':
+
+        if self.to_ != self.from_:
             self.add_text(to_entry, ' ' + self.to_, 'black')
             self.add_text(from_entry, ' ' + self.from_, 'black')
             
     def search_flights(self):
-        if self.to_ != '' and self.from_ != '' and self.full_date != '':
-            for item in self.container.winfo_children():
+        if self.in_flights == False and self.valid_date() and self.valid_destination():
+            for item in self.main_frame.winfo_children():
                 item.destroy()
-            self.create_tab()
-            frame1 = Frame(self.container, height = 100, bg = 'light blue')
+            In_flights = True
+            frame1 = Frame(self.main_frame, height = 100, bg = 'light blue')
             frame1.grid(row = 2, column = 1, sticky = 'we', padx = 110)
+            
+        self.in_flights = False
 mygui = Gui()
-mygui.home_page()
+mygui.logo()
     
 window.mainloop()
-
-
-
-
-
-
-
-
-
-
-
-
-
