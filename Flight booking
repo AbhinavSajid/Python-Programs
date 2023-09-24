@@ -1,8 +1,10 @@
 from tkinter import *
+import mysql.connector as mycon
 from PIL import Image, ImageTk
+import math
 import time
 import random
-import parser as pr
+import data
 
 #window
 window = Tk(screenName=None, baseName=None, className='Tk', useTk=1)
@@ -11,21 +13,46 @@ window.bind('<Escape>', lambda event: window.destroy())
 window.title('Flight booking')
 window.geometry('1366x768')
 window.minsize(960, 540)
-#window.attributes('-fullscreen', True)
+window.attributes('-fullscreen', True)
 
 class Gui:
     def __init__(self):
-        self.container = Frame(window)
-        self.container.pack(fill = 'both', expand = True)
-        self.container.grid_columnconfigure(1, weight = 1)
-        self.container.grid_rowconfigure(2, weight = 1)
         self.days = {1: 31, 2: 28, 3: 31, 4: 30, 5: 31, 6: 30 ,
         7: 31, 8: 31, 9: 30, 10: 31, 11: 30, 12: 31}
         self.month_num = ['January', 'February', 'March', 'April', 'May', 'June', 'July',
         'August', 'September', 'October', 'November', 'December']
+        self.currency = {'Indian Rupee': ('₹', 1), 'US Dollar': ('$', 0.012), 'Euro': ('€', 0.010)}
         self.to_ = self.from_ = self.full_date = ''
-        self.in_flights = False
-        
+        self.travel_date_entry = Entry()
+    #update with sql    
+    def fetch_countries(self):
+        self.countries = []
+        for i in range(len(data.country)):
+            self.countries.append(data.country[i + 1])
+        return self.countries
+    
+    def flight_time(self, duration):
+        time = []
+        mins = round(random.randint(0, 57) / 5) * 5
+        hrs = random.randint(0, 23)
+        hrs_prefix = '0' if hrs < 10 else ''
+        mins_prefix = '0' if mins < 10 else ''
+        time.extend([hrs_prefix + str(hrs), mins_prefix + str(mins)])
+        hrs = round(int(time[0]) + duration // 60)
+        mins = round(int(time[1]) + duration % 60)
+        if mins > 59:
+            hrs += 1
+            mins -= 60
+        new_day = False
+        if hrs > 23:
+            hrs = hrs - 24
+            new_day = True
+        hrs_prefix = '0' if hrs < 10 else ''
+        mins_prefix = '0' if mins < 10 else ''
+        time.extend([hrs_prefix + str(hrs), mins_prefix + str(mins), new_day])
+        return time
+            
+        return (random.randint(0,23),mins)
     def add_text(self, widget, text, color):
         widget.delete(0, "end")
         if color is not False:
@@ -34,14 +61,18 @@ class Gui:
             widget.insert(0, text)
         
     def logo(self):
-        self.logo_image = ImageTk.PhotoImage(Image.open('images/Skyline_logo.png'))
+        self.container = Frame(window)
+        self.container.pack(fill = 'both', expand = True)
+        self.container.grid_columnconfigure(1, weight = 1)
+        self.container.grid_rowconfigure(2, weight = 1)
+        self.logo_image = PhotoImage(file = 'images/Skyline_logo.png')
         label = Label(self.container, image = self.logo_image)
         label.pack(fill = 'both', expand =  True)
         def proceed():
             label.destroy()
             self.create_tab()
             self.home_page()
-        label.after(2500, proceed)
+        label.after(250, proceed)
     
     def create_tab(self):
         for item in self.container.winfo_children():
@@ -66,7 +97,7 @@ class Gui:
         frames = [PhotoImage(file = file,format = f'gif -index {i}') for i in range(frame_count)]
         count = 0
         logo_label = Label(self.tab, image = '', bg = 'blue')
-        logo_label.grid(column = 1, row = 1)
+        logo_label.grid(column = 1, row = 1, padx = (10,0))
         def animation(count):
             img = frames[count]
             logo_label.configure(image = img)
@@ -93,11 +124,10 @@ class Gui:
         for item in self.main_frame.winfo_children():
             item.destroy()
 
-        self.sunset_image = ImageTk.PhotoImage(Image.open('images/airplane_sunset.png'))
-        #self.sunset_image = PhotoImage(file = 'images/airplane_sunset.png')
+        self.sunset_image = PhotoImage(file = 'images/Airplane_sunset.png')
         self.display = Label(self.main_frame, image = self.sunset_image, height = 550)
         self.display.grid(row = 2, column = 1, pady = (10,0), sticky = 'we', padx = 110)
-        
+
     def pick_date(self):
         self.frame1 = Frame(self.tab2, bg = 'grey')
         self.frame1.grid(row = 2, column = 3, sticky = 'nsew', pady = (5,0))
@@ -115,12 +145,12 @@ class Gui:
         self.year_spinbox.grid(row = 1, column = 3, padx = 4)
         
     def valid_destination(self):
-        inst = pr.sql()
         self.from_ = self.from_var.get().strip().capitalize()
         self.to_ = self.to_var.get().strip().capitalize()
         if self.to_ == self.from_:
             return False
-        if self.to_ in inst.fetch_countries() and self.from_ in inst.fetch_countries():
+        #update with sql
+        if self.to_ in self.fetch_countries() and self.from_ in self.fetch_countries():
             return True
         else:
             return False
@@ -156,7 +186,7 @@ class Gui:
         self.travel_date_entry.delete(0, 'end')
         day = int(self.day_spinbox.get())
         if day > self.days[self.month_num.index(self.month_spinbox.get()) + 1]:
-            day = self.days[self.month_spinbox.get()]
+            day = self.days[self.month_num.index(self.month_spinbox.get()) + 1]
         ordinals = {1: 'st ', 2: 'nd ', 3: 'rd '}
         ordinal = 'th '
         if day in ordinals:
@@ -169,12 +199,12 @@ class Gui:
         self.date_day = day
         self.date_year = int(self.year_spinbox.get())
 
-    #booking frame
+    #booking
     def book_flight(self):
         for item in self.main_frame.winfo_children():
             item.destroy()
         frame = Frame(self.main_frame, bg = 'grey', height = 200)
-        frame.grid(row = 1, column = 1, pady = (100, 0), sticky = 'we', padx = 110)
+        frame.grid(row = 1, column = 1, pady = (100, 0), sticky = 'we', padx = 200)
         frame.grid_columnconfigure(1, weight = 1)
         frame.grid_rowconfigure(2, weight = 1)
         frame.grid_propagate(False)
@@ -184,11 +214,11 @@ class Gui:
         tab1.grid_propagate(False)
 
         from_ = Label(tab1, text = 'From', font = ('Ariel', 20), bg = 'blue', fg = 'white')
-        from_.grid(column = 1, row = 1, pady = 15, padx = (120))
+        from_.grid(column = 1, row = 1, pady = 15, padx = (100))
         to = Label(tab1, text = 'To', font = ('Ariel', 20), bg = 'blue', fg = 'white')
-        to.grid(column = 2, row = 1, padx = (150, 0))
+        to.grid(column = 2, row = 1, padx = (90, 0))
         travel_date = Label(tab1, text = 'Travel Date', font = ('Ariel', 20), bg = 'blue', fg = 'white')
-        travel_date.grid(column = 3, row = 1, padx = (250, 0))
+        travel_date.grid(column = 3, row = 1, padx = (210, 0))
         
         self.tab2 = Frame(frame, bg = 'grey')
         self.tab2.grid(sticky = 'nsew', row = 2, column = 1)
@@ -197,8 +227,8 @@ class Gui:
             if mode == 1:
                 self.frame2 = Frame(self.main_frame)
                 self.frame2.place(x = xcor, y = 250)
-                inst = pr.sql()
-                country = inst.fetch_countries()
+                #update with sql
+                country = self.fetch_countries()
                 if self.to_var.get().strip() in country:
                     country.remove(self.to_var.get().strip())
                 if self.from_var.get().strip() in country:
@@ -228,19 +258,19 @@ class Gui:
                 for item in self.frame1.winfo_children():
                     item.destroy()
         self.from_var = StringVar()
-        from_entry = Entry(self.tab2, font = ('Ariel', 20), fg = 'grey', textvariable = self.from_var)
+        from_entry = Entry(self.tab2, font = ('Ariel', 20), fg = 'grey', textvariable = self.from_var, width = 15)
         from_entry.grid(row = 1, column = 1,pady = (40,0), padx = (20, 0))
         from_entry.insert(0, ' from')
-        from_entry.bind("<FocusIn>", lambda self: temp(from_entry, ' from', 1, 170))
-        from_entry.bind("<FocusOut>", lambda self: temp(from_entry, ' from', 2, 170))
+        from_entry.bind("<FocusIn>", lambda self: temp(from_entry, ' from', 1, 250))
+        from_entry.bind("<FocusOut>", lambda self: temp(from_entry, ' from', 2, 250))
 
         self.to_var = StringVar()
-        to_entry = Entry(self.tab2, font = ('Ariel', 20), fg = 'grey', textvariable = self.to_var)
+        to_entry = Entry(self.tab2, font = ('Ariel', 20), fg = 'grey', textvariable = self.to_var, width = 15)
         to_entry.grid(row = 1, column = 2, padx = (20, 0), pady = (40,0))
         to_entry.insert(0, ' to')
         to_entry.bind("<FocusIn>", lambda self: temp(to_entry, ' to', 1, 500))
         to_entry.bind("<FocusOut>", lambda self: temp(to_entry, ' to', 2, 500))
-        
+
         self.travel_date_entry = Entry(self.tab2, font = ('Ariel', 20), fg = 'grey')
         self.travel_date_entry.grid(row = 1, column = 3, padx = (30, 0), pady = (40,0))
         self.travel_date_entry.insert(0, ' dd/mm/yyyy')
@@ -257,15 +287,72 @@ class Gui:
             self.add_text(from_entry, ' ' + self.from_, 'black')
             
     def search_flights(self):
-        if self.in_flights == False and self.valid_date() and self.valid_destination():
+        if self.travel_date_entry.winfo_exists() and self.valid_date() and self.valid_destination():
             for item in self.main_frame.winfo_children():
                 item.destroy()
-            In_flights = True
-            frame1 = Frame(self.main_frame, height = 100, bg = 'light blue')
-            frame1.grid(row = 2, column = 1, sticky = 'we', padx = 110)
-            
-        self.in_flights = False
+            self.main_frame.grid_rowconfigure(4, weight = 1)
+            self.main_frame.grid_columnconfigure(1, weight = 1)
+            def get_flights(row):
+                #update with sql
+                for i in data.country:
+                    if data.country[i] == self.from_:
+                        long1 = data.longitude[i]
+                        lat1 = data.latitude[i]
+                    elif data.country[i] == self.to_:
+                        long2 = data.longitude[i]
+                        lat2 = data.latitude[i]
+                dist = (((long2 - long1) ** 2 + (lat2 - lat1) ** 2) ** (0.5)) * 111
+                price = round(dist * 5 + random.randint(0, round(dist/3)))
+                chosen_cur = 'Indian Rupee'
+                symbol = self.currency[chosen_cur][0]
+                duration = round((dist / 10 + random.randint(-20,20)) / 5) * 5
+                time = self.flight_time(duration)
+
+                frame1 = Frame(self.main_frame, height = 130, bg = 'light blue')
+                frame1.grid(row = row + 1, column = 1, sticky = 'we', padx = 200)
+                frame1.grid_propagate(False)
+
+                
+                self.skyline_img = {}
+                self.skyline_img[row] = PhotoImage(file = 'images/Skyline_thumbnail.png')
+                airline_pic = Label(frame1, image = self.skyline_img[row])
+                airline_pic.grid(column = 1, row = 1, rowspan = 2, padx = (15, 0), pady = 15)
+                airline_pic.photo = self.skyline_img[row]
+                
+                airline_label = Label(frame1, text = 'Skyline', bg = 'light blue',
+                font = ('Ariel', 20), fg = 'dark blue')
+                airline_label.grid(row = 1, column = 2, padx = (10,0), pady = (0, 5), rowspan = 2)
+                
+                from_time_label = Label(frame1, text = time[0] + ':' + time[1],
+                font = ('Ariel', 20, 'bold'), bg = 'light blue')
+                from_time_label.grid(row = 1, column = 3, pady = (30, 0), padx = (60, 0))
+                
+                from_label = Label(frame1, text = self.from_,
+                font = ('Ariel', 15), bg = 'light blue')
+                from_label.grid(row = 2, column = 3, padx = (60, 0), pady = (0, 30))
+
+                duration_label = Label(frame1, text = str(round(duration//60)) + 'h ' +
+                str(round(duration % 60)) + 'm', font = ('Ariel', 13), bg = 'light blue')
+                duration_label.grid(row = 1, column = 4, rowspan = 2, padx = 70)
+                
+                to_time_label = Label(frame1, text = time[2] + ':' + time[3],
+                font = ('Ariel', 20, 'bold'), bg = 'light blue')
+                to_time_label.grid(row = 1, column = 5, pady = (30,0))
+                
+                to_label = Label(frame1, text = self.to_,
+                font = ('Ariel', 15), bg = 'light blue')
+                to_label.grid(row = 2, column = 5, pady = (0, 30))
+
+                price_label = Label(frame1, text = symbol + str(price * self.currency[chosen_cur][1]),
+                bg = 'light blue', font = ('Ariel', 20))
+                price_label.grid(row  =1, column = 6, rowspan = 2, padx = (60,0))
+
+                book_button = Button(frame1, text = 'Book Flight',
+                font = ('Ariel', 15), relief = GROOVE, bg = 'light blue')
+                book_button.grid(row = 1, rowspan = 2, column = 7, padx = (10, 0))
+            for i in range(1,random.randint(3,4)):
+                get_flights(i)
+              
 mygui = Gui()
 mygui.logo()
-    
 window.mainloop()
