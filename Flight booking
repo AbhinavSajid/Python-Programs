@@ -1,14 +1,12 @@
 from tkinter import *
-import mysql.connector as mycon
-from PIL import Image, ImageTk
 import math
 import time
 import random
-import data
+import mysql_api as sql
 
 #window
 window = Tk(screenName=None, baseName=None, className='Tk', useTk=1)
-window.wm_attributes("-transparentcolor", '#eeefff')
+#window.wm_attributes("-transparentcolor", '#eeefff')
 window.bind('<Escape>', lambda event: window.destroy())
 window.title('Flight booking')
 window.geometry('1366x768')
@@ -24,12 +22,6 @@ class Gui:
         self.currency = {'Indian Rupee': ('₹', 1), 'US Dollar': ('$', 0.012), 'Euro': ('€', 0.010)}
         self.to_ = self.from_ = self.full_date = ''
         self.travel_date_entry = Entry()
-    #update with sql    
-    def fetch_countries(self):
-        self.countries = []
-        for i in range(len(data.country)):
-            self.countries.append(data.country[i + 1])
-        return self.countries
     
     def flight_time(self, duration):
         time = []
@@ -92,8 +84,8 @@ class Gui:
         self.slogan = Label(self.tab, text='Discover the world', font=('Ariel',10,'bold'), fg='white', bg='blue')
         self.slogan.grid(row=1,column=3,padx=5,pady=(0,5))
 
-        file = 'images/globe_logo.gif'
-        frame_count = Image.open(file).n_frames
+        file = 'images/Globe_logo.gif'
+        frame_count = 120
         frames = [PhotoImage(file = file,format = f'gif -index {i}') for i in range(frame_count)]
         count = 0
         logo_label = Label(self.tab, image = '', bg = 'blue')
@@ -149,8 +141,7 @@ class Gui:
         self.to_ = self.to_var.get().strip().capitalize()
         if self.to_ == self.from_:
             return False
-        #update with sql
-        if self.to_ in self.fetch_countries() and self.from_ in self.fetch_countries():
+        if self.to_ in sql.fetch_countries() and self.from_ in sql.fetch_countries():
             return True
         else:
             return False
@@ -204,7 +195,7 @@ class Gui:
         for item in self.main_frame.winfo_children():
             item.destroy()
         frame = Frame(self.main_frame, bg = 'grey', height = 200)
-        frame.grid(row = 1, column = 1, pady = (100, 0), sticky = 'we', padx = 200)
+        frame.grid(row = 1, column = 1, pady = (100, 0), sticky = 'we', padx = 110)
         frame.grid_columnconfigure(1, weight = 1)
         frame.grid_rowconfigure(2, weight = 1)
         frame.grid_propagate(False)
@@ -227,8 +218,7 @@ class Gui:
             if mode == 1:
                 self.frame2 = Frame(self.main_frame)
                 self.frame2.place(x = xcor, y = 250)
-                #update with sql
-                country = self.fetch_countries()
+                country = sql.fetch_countries()
                 if self.to_var.get().strip() in country:
                     country.remove(self.to_var.get().strip())
                 if self.from_var.get().strip() in country:
@@ -293,14 +283,13 @@ class Gui:
             self.main_frame.grid_rowconfigure(4, weight = 1)
             self.main_frame.grid_columnconfigure(1, weight = 1)
             def get_flights(row):
-                #update with sql
-                for i in data.country:
-                    if data.country[i] == self.from_:
-                        long1 = data.longitude[i]
-                        lat1 = data.latitude[i]
-                    elif data.country[i] == self.to_:
-                        long2 = data.longitude[i]
-                        lat2 = data.latitude[i]
+                #test
+                t = sql.country_info(self.from_)
+                long1 = t[5]
+                lat1 = t[4]
+                t = sql.country_info(self.to_)
+                long2 = t[5]
+                lat2 = t[4]
                 dist = (((long2 - long1) ** 2 + (lat2 - lat1) ** 2) ** (0.5)) * 111
                 price = round(dist * 5 + random.randint(0, round(dist/3)))
                 chosen_cur = 'Indian Rupee'
@@ -309,7 +298,7 @@ class Gui:
                 time = self.flight_time(duration)
 
                 frame1 = Frame(self.main_frame, height = 130, bg = 'light blue')
-                frame1.grid(row = row + 1, column = 1, sticky = 'we', padx = 200)
+                frame1.grid(row = row + 1, column = 1, sticky = 'we', padx = 150)
                 frame1.grid_propagate(False)
 
                 
@@ -352,7 +341,7 @@ class Gui:
                 book_button.grid(row = 1, rowspan = 2, column = 7, padx = (10, 0))
             for i in range(1,random.randint(3,4)):
                 get_flights(i)
-              
+sql.fetch_countries              
 mygui = Gui()
 mygui.logo()
 window.mainloop()
