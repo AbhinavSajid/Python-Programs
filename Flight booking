@@ -434,12 +434,17 @@ class Gui:
         book_button.grid(row = 8, column = 1, columnspan = 2, pady = (10, 20))
 
     def ticket(self):
-        if self.valid_details():
+        #if self.valid_details():
             for item in self.main_frame.winfo_children():
                 item.destroy()
-            self.boarding_pass = PhotoImage(file = 'images/Boarding_pass.png')
-            img_label = Label(self.main_frame, image = self.boarding_pass)
-            img_label.grid(row = 1, column = 1, sticky = 'nsew')
+            def show_cords(event):
+                print(event.x, event.y)
+            self.board_pass = PhotoImage(file = 'images/Boarding_pass.png')
+            canvas = Canvas(self.main_frame, width = 1366, height = 698)
+            canvas.grid(row = 1, column = 1)
+            canvas.bind('<Button-1>', lambda event: show_cords(event))
+            canvas.create_image(0, 0, image = self.board_pass, anchor = NW)
+            canvas.create_text(100, 100, text = 'hello', font = ('Ariel', 20))
             
 mygui = Gui()
 mygui.logo()
