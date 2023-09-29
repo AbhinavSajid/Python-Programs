@@ -216,9 +216,10 @@ class Gui:
         self.tab2.grid_propagate(False)
         def temp(widget, text, mode, xcor):
             if mode == 1:
+                # test
                 self.frame2 = Frame(self.main_frame)
                 self.frame2.place(x = xcor, y = 250)
-                country = sql.fetch_countries()
+                country = sql.fetch_countries(widget.get())
                 if self.to_var.get().strip() in country:
                     country.remove(self.to_var.get().strip())
                 if self.from_var.get().strip() in country:
@@ -253,6 +254,7 @@ class Gui:
         from_entry.insert(0, ' from')
         from_entry.bind("<FocusIn>", lambda self: temp(from_entry, ' from', 1, 250))
         from_entry.bind("<FocusOut>", lambda self: temp(from_entry, ' from', 2, 250))
+        from_entry.bind("<KeyRelease>", lambda self: temp(from_entry, ' from', 1, 250))
 
         self.to_var = StringVar()
         to_entry = Entry(self.tab2, font = ('Ariel', 20), fg = 'grey', textvariable = self.to_var, width = 15)
@@ -260,6 +262,7 @@ class Gui:
         to_entry.insert(0, ' to')
         to_entry.bind("<FocusIn>", lambda self: temp(to_entry, ' to', 1, 500))
         to_entry.bind("<FocusOut>", lambda self: temp(to_entry, ' to', 2, 500))
+        to_entry.bind("<KeyRelease>", lambda self: temp(from_entry, ' from', 1, 250))
 
         self.travel_date_entry = Entry(self.tab2, font = ('Ariel', 20), fg = 'grey')
         self.travel_date_entry.grid(row = 1, column = 3, padx = (30, 0), pady = (40,0))
@@ -285,11 +288,11 @@ class Gui:
             def get_flights(row):
                 #test
                 t = sql.country_info(self.from_)
-                long1 = t[5]
-                lat1 = t[4]
+                long1 = t[0][5]
+                lat1 = t[0][4]
                 t = sql.country_info(self.to_)
-                long2 = t[5]
-                lat2 = t[4]
+                long2 = t[0][5]
+                lat2 = t[0][4]
                 dist = (((long2 - long1) ** 2 + (lat2 - lat1) ** 2) ** (0.5)) * 111
                 price = round(dist * 5 + random.randint(0, round(dist/3)))
                 chosen_cur = 'Indian Rupee'
@@ -297,8 +300,9 @@ class Gui:
                 duration = round((dist / 10 + random.randint(-20,20)) / 5) * 5
                 time = self.flight_time(duration)
 
+                pady = 40 if row == 1 else 0
                 frame1 = Frame(self.main_frame, height = 130, bg = 'light blue')
-                frame1.grid(row = row + 1, column = 1, sticky = 'we', padx = 150)
+                frame1.grid(row = row + 1, column = 1, sticky = 'we', padx = 150, pady = (pady, 0))
                 frame1.grid_propagate(False)
 
                 
@@ -341,7 +345,102 @@ class Gui:
                 book_button.grid(row = 1, rowspan = 2, column = 7, padx = (10, 0))
             for i in range(1,random.randint(3,4)):
                 get_flights(i)
-sql.fetch_countries              
+                
+    def valid_details(self):
+        d = {1: self.name_entry, 2: self.email_entry, 3: self.mobile_entry}
+        for i in range(1, 4):
+            if i == 1:
+                if not 4 > len(d[i].get().split()) > 1:
+                    return False
+            elif i == 2:
+                if d[i].get().find('@') == -1 or d[i].get()[-4:] != '.com':
+                    return False
+            elif i == 3:
+                num = ''.join(str(d[i].get()).split())
+                if len(num) != 10 or not num.isdecimal() :
+                    return False
+        return True
+
+    # booking details
+    def booking_details(self):
+        theme = 'light blue'
+        for item in self.main_frame.winfo_children():
+                item.destroy()
+        frame = Frame(self.main_frame, bg = theme)
+        frame.grid(row = 1, column = 1, sticky = 'we', padx = 130, pady = (30, 0))
+        frame.grid_columnconfigure(2, weight = 1)
+        frame.grid_rowconfigure(8, weight = 1)
+
+        def temp(widget, text, mode):
+            if mode == 1 and widget.get() == text:
+                self.add_text(widget, False, 'black')
+            elif widget.get() == '':
+                self.add_text(widget, text, 'grey')
+            elif mode == 2:
+                if len(widget.get()) > 0 and widget.get()[0] != ' ':
+                    self.add_text(widget, ' ' + widget.get(), 'black')
+                if widget == self.mobile_entry and len(self.mobile_entry.get().strip()) == 10:
+                    no = self.mobile_entry.get().strip()
+                    self.add_text(widget,' ' + no[:2] + ' ' + no[2:], 'black')
+        main_label = Label(frame, text = 'Booking Details', bg = theme, font = ('Ariel', 25, 'bold'))
+        main_label.grid(row = 1, column = 1, padx = (20, 20), pady = (20, 20))
+        
+        name_label = Label(frame, text = 'Full name', font = ('Ariel', 20), bg = theme)
+        name_label.grid(row = 2, column = 1, pady = (0, 5))
+        self.name_entry = Entry(frame, font = ('Ariel', 20), fg = 'grey', width = 30)
+        self.name_entry.grid(row = 2, column = 2, sticky = 'w', padx = (200, 0))
+        self.name_entry.bind("<FocusIn>", lambda a: temp(self.name_entry, ' full name', 1))
+        self.name_entry.bind("<FocusOut>", lambda a: temp(self.name_entry, ' full name', 2))
+        self.name_entry.insert(0, ' full name')
+
+        email_label = Label(frame, text = 'Email', bg = theme, font = ('Ariel', 20))
+        email_label.grid(row = 3, column = 1, pady = (0, 5))
+        self.email_entry = Entry(frame, font = ('Ariel', 20), fg = 'grey', width = 30)
+        self.email_entry.grid(row = 3, column = 2, sticky = 'w', padx = (200, 0))
+        self.email_entry.bind("<FocusIn>", lambda a: temp(self.email_entry, ' email', 1))
+        self.email_entry.bind("<FocusOut>", lambda a: temp(self.email_entry, ' email', 2))
+        self.email_entry.insert(0, ' email')
+        
+        mobile_label = Label(frame, text = 'Mobile number', bg = theme, font = ('Ariel', 20))
+        mobile_label.grid(row = 4, column = 1, pady = (0, 5))
+        self.mobile_entry = Entry(frame, font = ('Ariel', 20), fg = 'grey')
+        self.mobile_entry.grid(row = 4, column = 2, sticky = 'w', padx = (200, 0))
+        self.mobile_entry.bind("<FocusIn>", lambda a: temp(self.mobile_entry, ' mobile number', 1))
+        self.mobile_entry.bind("<FocusOut>", lambda a: temp(self.mobile_entry, ' mobile number', 2))
+        self.mobile_entry.insert(0, ' mobile number')
+
+        def update_price():
+            mul = {' Economy': 1, ' Premium Economy': 1.8, ' Business': 3.8, ' First': 9.3}
+            self.price[1] = round(mul[class_spinbox.get()] * int(pass_spinbox.get()) * self.price[0])
+            price_label.configure(text = f'Price: {self.symbol}{str(self.price[1])}')
+        passengers_label = Label(frame, text = 'Passengers', bg = theme, font = ('Ariel', 20))
+        passengers_label.grid(row = 5, column = 1, pady = (0, 5))
+        pass_spinbox = Spinbox(frame, from_ = 1, to = 10,
+        font = ('Ariel', 20), width = 2, command = update_price)
+        pass_spinbox.grid(row = 5, column = 2, sticky = 'w', padx = (200, 0))
+
+        class_label = Label(frame, text = 'Class', bg = theme, font = ('Ariel', 20))
+        class_label.grid(row = 6, column = 1, pady = (0, 5))
+        classes = [' Economy', ' Premium Economy', ' Business', ' First']
+        class_spinbox = Spinbox(frame, values = classes,
+        font = ('Ariel', 20), width = 16, command = update_price)
+        class_spinbox.grid(row = 6, column = 2, sticky = 'w', padx = (200, 0))
+
+        price_label = Label(frame, text = 'Price: ' + self.symbol + str(self.price[1]),
+        font = ('Ariel', 20), bg = theme)
+        price_label.grid(row = 7, column = 1, pady = (0, 5))
+        
+        book_button = Button(frame, text = 'Book flight', font = ('Ariel', 20), command = self.ticket)
+        book_button.grid(row = 8, column = 1, columnspan = 2, pady = (10, 20))
+
+    def ticket(self):
+        if self.valid_details():
+            for item in self.main_frame.winfo_children():
+                item.destroy()
+            self.boarding_pass = PhotoImage(file = 'images/Boarding_pass.png')
+            img_label = Label(self.main_frame, image = self.boarding_pass)
+            img_label.grid(row = 1, column = 1, sticky = 'nsew')
+            
 mygui = Gui()
 mygui.logo()
 window.mainloop()
