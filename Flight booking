@@ -20,9 +20,13 @@ class Gui:
         self.month_num = ['January', 'February', 'March', 'April', 'May', 'June', 'July',
         'August', 'September', 'October', 'November', 'December']
         self.currency = {'Indian Rupee': ('₹', 1), 'US Dollar': ('$', 0.012), 'Euro': ('€', 0.010)}
+        self.email = ''
         self.to_ = self.from_ = self.full_date = ''
         self.travel_date_entry = Entry()
-    
+        self.travel_date_entry.destroy()
+        self.frame2 = Entry()
+        self.frame2.destroy()
+        
     def flight_time(self, duration):
         time = []
         mins = round(random.randint(0, 57) / 5) * 5
@@ -51,7 +55,8 @@ class Gui:
             widget.config(fg = color)
         if text is not False:
             widget.insert(0, text)
-        
+
+# startup logo ======================================================================        
     def logo(self):
         self.container = Frame(window)
         self.container.pack(fill = 'both', expand = True)
@@ -65,7 +70,160 @@ class Gui:
             self.create_tab()
             self.home_page()
         label.after(250, proceed)
-    
+
+# login/sign up =========================================================================
+    def valid_user(self, mode):
+        if mode == 'sign_up':
+            if self.email_entry.get().strip() not in sql.get_emails():
+                if 9 > len(self.pass_entry.get()) > 4 and self.pass_entry.get().isalnum():
+                    # fix proper values
+                    values = (sql.sno('users'))
+                    sql.enter_users(values)
+        else:
+            # fix proper values
+            if self.email_entry.get().strip() in sql.get_emails():
+                if self.pass_entry.get() == sql.users_get_values():
+                    self.email = self.email_entry.get().strip()
+                    
+    def login_page(self, mode = 'login'):
+        def temp(widget, text, mode):
+            var = widget.get()
+            if mode == 1:
+                if widget == self.pass_entry:
+                    if len(var) > 0:
+                        if len(var) > 8 or not (var[-1].isdecimal() or var[-1].isalpha()):
+                            if var[:-1] != text:
+                                self.add_text(widget, var[:-1], 'black')
+                            else:
+                                self.add_text(widget, text, 'grey')                          
+                elif widget == self.email_entry:
+                    if var.count('@') > 1:
+                        self.add_text(widget, var[:-1], 'black')
+                elif widget == self.user_entry:
+                    if not (var[-1].isdecimal() or var[-1].isalpha()):
+                        if var[:-1] != text:
+                            self.add_text(widget, var[:-1], 'black')
+                        else:
+                            self.add_text(widget, text, 'grey')
+                if widget != self.pass_entry:
+                    if len(var) == 0 or var[0] != ' ':
+                        self.add_text(widget, ' ' + var, 'black')
+                if var == text:
+                    if widget != self.pass_entry:
+                        self.add_text(widget, ' ', 'black')
+                    else:
+                        widget.config(show = '*')
+                        self.add_text(widget, '', 'black')
+                elif var == '':
+                    if widget == self.pass_entry:
+                        widget.config(show = '')
+                    self.add_text(widget, text, 'grey')
+                elif widget.cget('fg') == 'grey':
+                    self.add_text(widget, ' ', 'black')
+                    if widget == self.pass_entry:
+                        widget.config(show = '*')
+                        self.add_text(widget, '', 'black')
+            if mode == 2:
+                if (len(widget.get()) > 0 and widget.get()[0] != ' ' and
+                widget != self.pass_entry):
+                    self.add_text(widget, ' ' + widget.get(), 'black')
+                if widget.get() == ' ' or widget.get() == '':
+                    if widget == self.pass_entry:
+                        widget.config(show = '')
+                    self.add_text(widget, text, 'grey')
+        for item in self.main_frame.winfo_children():
+            item.destroy()
+        theme = 'light blue'
+        frame1 = Frame(self.main_frame, bg = theme)
+        frame1.grid(row = 1, column = 1, padx = 170, pady = (90, 0), sticky = 'we')
+        frame1.grid_columnconfigure(3, weight = 1)
+        
+        if mode == 'sign_up':
+            user_label = Label(frame1, text = 'Username', font = ('Ariel', 20), bg = theme)
+            user_label.grid(row = 2, column = 1, padx = (190, 0), pady = (20, 0))
+            self.user_entry = Entry(frame1, font = ('Ariel', 20), fg = 'grey', width = 30)
+            self.user_entry.grid(row = 2, column = 2, padx = (20, 0), pady = (20, 0))
+            self.user_entry.bind("<FocusIn>", lambda a: temp(self.user_entry, ' username', 1))
+            self.user_entry.bind("<FocusOut>", lambda a: temp(self.user_entry, ' username', 2))
+            self.user_entry.bind("<KeyRelease>", lambda a: temp(self.user_entry, ' username', 1))
+            self.user_entry.insert(0, ' username')
+
+            txt = 'Already have an account?  Login instead'
+            suggest_login = Button(frame1, text = txt, font = ('Ariel', 12),
+            bg = theme, relief = 'flat', command = self.login_page, fg = 'blue')
+            suggest_login.grid(row = 5, column = 1, columnspan = 3, pady = (10, 0))
+            text = 'Sign Up'
+            row = 1
+        else:
+            txt = "Don't have an account?  Sign up instead"
+            suggest_login = Button(frame1, text = txt, font = ('Ariel', 12), bg = theme,
+            relief = 'flat', command = lambda: self.login_page('sign_up'), fg = 'blue')
+            suggest_login.grid(row = 4, column = 1, columnspan = 3, pady = (10, 0))
+            text = 'Login'
+            row = 0
+        main_label = Label(frame1, text = text, font = ('Ariel', 25, 'bold'), bg = theme)
+        main_label.grid(row = 1, column = 1, columnspan = 3, pady = (30, 20))
+        
+        email_label = Label(frame1, text = 'Email', font = ('Ariel', 20), bg = theme)
+        email_label.grid(row = 2 + row, column = 1, padx = (190, 0), pady = (20, 0))
+        self.email_entry = Entry(frame1, font = ('Ariel', 20), fg = 'grey', width = 30)
+        self.email_entry.grid(row = 2 + row, column = 2, padx = (20, 0), pady = (20, 0))
+        self.email_entry.bind("<FocusIn>", lambda a: temp(self.email_entry, ' email', 1))
+        self.email_entry.bind("<FocusOut>", lambda a: temp(self.email_entry, ' email', 2))
+        self.email_entry.bind("<KeyRelease>", lambda a: temp(self.email_entry, ' email', 1))
+        self.email_entry.insert(0, ' email')
+
+        def show(event):
+            if self.pass_entry.cget('show') == '*':
+                self.pass_entry.config(show = '')
+            else:
+                self.pass_entry.config(show = '*')
+        pass_label = Label(frame1, text = 'Password', font = ('Ariel', 20), bg = theme)
+        pass_label.grid(row = 3 + row, column = 1, padx = (190, 0), pady = (20, 0))
+        self.pass_entry = Entry(frame1, font = ('Ariel', 20), fg = 'grey', width = 30)
+        self.pass_entry.grid(row = 3 + row, column = 2, padx = (20, 0), pady = (20, 0))
+        self.pass_entry.bind("<FocusIn>", lambda a: temp(self.pass_entry, ' password', 1))
+        self.pass_entry.bind("<FocusOut>", lambda a: temp(self.pass_entry, ' password', 2))
+        self.pass_entry.bind("<KeyRelease>", lambda a: temp(self.pass_entry, ' password', 1))
+        self.pass_entry.bind("<Double-Button>", show)
+        self.pass_entry.insert(0, ' password')
+            
+        login_button = Button(frame1, text = text, font = ('Ariel', 15),
+        command = lambda: self.valid_user(mode))
+        login_button.grid(row = 5 + row, column = 1, columnspan = 3, pady = (30, 40))
+        
+# account ================================================================================        
+    def account(self):
+        if self.email == '':
+            self.login_page('sign_up')
+        else:
+            for item in self.main_frame.winfo_children():
+                item.destroy()
+            theme = 'light blue'
+            frame = Frame(self.main_frame, bg = theme)
+            frame.grid(pady = (60, 0), padx = 170)
+            
+            #fix with sql
+            user_label = Label(frame, text = 'Username', bg = theme, font = ('Ariel', 20))
+            user_label.grid(row = 1, column = 1)
+            
+# tab ====================================================================================
+    def menubar(self):       
+        if self.frame2.winfo_exists() == False:
+            self.frame2 = Frame(self.main_frame)
+            self.frame2.place(x = self.menu.winfo_rootx() - 7, y = 0)
+            sign_up_button = Button(self.frame2, text = 'Sign Up', font = ('Ariel', 13),
+            command = lambda: [self.login_page('sign_up'), self.frame2.destroy()])
+            sign_up_button.grid(row = 1, column = 1)
+            login_button = Button(self.frame2, text = 'Login', font = ('Ariel', 13),
+            command = lambda: [self.login_page(), self.frame2.destroy()])
+            login_button.grid(row = 2, column = 1, sticky = 'we')
+            account_button = Button(self.frame2, text = 'Account', font = ('Ariel', 13),
+            command = lambda: [self.account(), self.frame2.destroy()])
+            account_button.grid(row = 3, column = 1, sticky = 'we')
+        else:
+            self.frame2.destroy()
+            
     def create_tab(self):
         for item in self.container.winfo_children():
             item.destroy()
@@ -78,11 +236,13 @@ class Gui:
         self.main_frame.grid_columnconfigure(1, weight = 1)
         self.main_frame.grid_rowconfigure(2, weight = 1)
         
-        self.airline = Label(self.tab, text = 'Skyline', fg = 'white', bg = 'blue', font = ('Ariel', 25))
-        self.airline.grid(row=1,column=2)
+        airline = Label(self.tab, text = 'Skyline', fg = 'white',
+        bg = 'blue', font = ('Ariel', 25))
+        airline.grid(row = 1, column = 2)
         
-        self.slogan = Label(self.tab, text='Discover the world', font=('Ariel',10,'bold'), fg='white', bg='blue')
-        self.slogan.grid(row=1,column=3,padx=5,pady=(0,5))
+        slogan = Label(self.tab, text='Discover the world',
+        font = ('Ariel', 10, 'bold'), fg = 'white', bg = 'blue')
+        slogan.grid(row=1,column=3,padx=5,pady=(0,5))
 
         file = 'images/Globe_logo.gif'
         frame_count = 120
@@ -99,19 +259,23 @@ class Gui:
             window.after(100, animation, count)
         animation(0)
         
-        self.home = Button(self.tab, text = 'Home page', bg = 'blue', fg = 'white', height = 1,
+        home = Button(self.tab, text = 'Home page', bg = 'blue', fg = 'white', height = 1,
         relief = 'flat', font = ('Ariel', 12), command = self.home_page)
-        self.home.grid(column = 4, row = 1, padx = (500,0), pady = 10)
+        home.grid(column = 4, row = 1, padx = (500,0), pady = 10)
         
-        self.book = Button(self.tab, text = 'Book flight', bg = 'blue', fg = 'white', height = 1,
+        book = Button(self.tab, text = 'Book flight', bg = 'blue', fg = 'white', height = 1,
         relief = 'flat', font = ('Ariel', 12), command = self.book_flight)
-        self.book.grid(column = 5, row = 1, padx = (20,0), pady = 10)
+        book.grid(column = 5, row = 1, padx = (20,0), pady = 10)
         
-        self.flights = Button(self.tab, text = 'Flights', bg = 'blue', fg = 'white', height = 1,
+        flights = Button(self.tab, text = 'Flights', bg = 'blue', fg = 'white', height = 1,
         relief = 'flat', font = ('Ariel', 12), command = self.search_flights)
-        self.flights.grid(column = 6, row = 1, padx = (20,0), pady = 10)
+        flights.grid(column = 6, row = 1, padx = (20,0), pady = 10)
+
+        self.menu = Button(self.tab, bg = 'blue', height = 1, relief = 'flat',text = 'Menu',
+        font = ('Ariel', 12), fg = 'white', command = self.menubar)
+        self.menu.grid(column = 7, row = 1, padx = (20,0), pady = 10)
         
-    #home page
+# home page ==================================================================================
     def home_page(self):
         for item in self.main_frame.winfo_children():
             item.destroy()
@@ -120,6 +284,7 @@ class Gui:
         self.display = Label(self.main_frame, image = self.sunset_image, height = 550)
         self.display.grid(row = 2, column = 1, pady = (10,0), sticky = 'we', padx = 110)
 
+# booking ===============================================================================
     def pick_date(self):
         self.frame1 = Frame(self.tab2, bg = 'grey')
         self.frame1.grid(row = 2, column = 3, sticky = 'nsew', pady = (5,0))
@@ -143,8 +308,7 @@ class Gui:
             return False
         if self.to_ in sql.fetch_countries() and self.from_ in sql.fetch_countries():
             return True
-        else:
-            return False
+        return False
         
     def valid_date(self):
         month = self.travel_date_entry.get()[5:-5]
@@ -190,7 +354,6 @@ class Gui:
         self.date_day = day
         self.date_year = int(self.year_spinbox.get())
 
-    #booking
     def book_flight(self):
         for item in self.main_frame.winfo_children():
             item.destroy()
@@ -208,7 +371,8 @@ class Gui:
         from_.grid(column = 1, row = 1, pady = 15, padx = (100))
         to = Label(tab1, text = 'To', font = ('Ariel', 20), bg = 'blue', fg = 'white')
         to.grid(column = 2, row = 1, padx = (90, 0))
-        travel_date = Label(tab1, text = 'Travel Date', font = ('Ariel', 20), bg = 'blue', fg = 'white')
+        travel_date = Label(tab1, text = 'Travel Date', font = ('Ariel', 20),
+        bg = 'blue', fg = 'white')
         travel_date.grid(column = 3, row = 1, padx = (210, 0))
         
         self.tab2 = Frame(frame, bg = 'grey')
@@ -216,17 +380,20 @@ class Gui:
         self.tab2.grid_propagate(False)
         def temp(widget, text, mode, xcor):
             if mode == 1:
-                # test
-                self.frame2 = Frame(self.main_frame)
-                self.frame2.place(x = xcor, y = 250)
-                country = sql.fetch_countries(widget.get())
+                if not self.frame2.winfo_exists():
+                    self.frame2 = Frame(self.main_frame)
+                    self.frame2.place(x = xcor, y = 250)
+                else:
+                    for item in self.frame2.winfo_children():
+                        item.destroy()
+                country = sql.fetch_countries()
                 if self.to_var.get().strip() in country:
                     country.remove(self.to_var.get().strip())
                 if self.from_var.get().strip() in country:
                     country.remove(self.from_var.get().strip())
                 button_dict = {}
                 for i in country:
-                    def action(x = i): 
+                    def action(x = i):
                         self.add_text(widget, ' ' + x, False)
                         self.frame2.destroy()
                     button_dict[i] = Button(self.frame2, text = i, font = ('Ariel', 15),
@@ -236,8 +403,12 @@ class Gui:
                 self.add_text(widget, False, 'black')
             elif widget.get() == '':
                 self.add_text(widget, text, 'grey')
+            elif widget.cget('fg') == 'grey':
+                self.add_text(widget, ' ' + widget.get()[5:], 'black')
             if mode == 2:
                 self.frame2.destroy()
+                if len(widget.get()) > 0 and widget.get()[0] != ' ':
+                    self.add_text(widget, ' ' + widget.get(), 'black') 
         def temp_travel(mode, text):
             if mode == 1:
                 self.pick_date()
@@ -279,26 +450,32 @@ class Gui:
             self.add_text(to_entry, ' ' + self.to_, 'black')
             self.add_text(from_entry, ' ' + self.from_, 'black')
             
+# flights ===========================================================================================
     def search_flights(self):
         if self.travel_date_entry.winfo_exists() and self.valid_date() and self.valid_destination():
             for item in self.main_frame.winfo_children():
                 item.destroy()
             self.main_frame.grid_rowconfigure(4, weight = 1)
             self.main_frame.grid_columnconfigure(1, weight = 1)
+            button_dict = {}
+            info = {}
             def get_flights(row):
-                #test
                 t = sql.country_info(self.from_)
-                long1 = t[0][5]
-                lat1 = t[0][4]
+                long1 = t[5]
+                lat1 = t[4]
                 t = sql.country_info(self.to_)
-                long2 = t[0][5]
-                lat2 = t[0][4]
+                long2 = t[5]
+                lat2 = t[4]
                 dist = (((long2 - long1) ** 2 + (lat2 - lat1) ** 2) ** (0.5)) * 111
                 price = round(dist * 5 + random.randint(0, round(dist/3)))
-                chosen_cur = 'Indian Rupee'
-                symbol = self.currency[chosen_cur][0]
+                self.chosen_cur = 'Indian Rupee'
+                self.symbol = self.currency[self.chosen_cur][0]
                 duration = round((dist / 10 + random.randint(-20,20)) / 5) * 5
                 time = self.flight_time(duration)
+                airlines = ['Skyline', 'Delta', 'Qatar airways', 'Lufthansa']
+                airline = random.choice(airlines)
+                info[row] = (price, str(round(duration//60)) + 'h ' +
+                str(round(duration % 60)) + 'm', time, airline) 
 
                 pady = 40 if row == 1 else 0
                 frame1 = Frame(self.main_frame, height = 130, bg = 'light blue')
@@ -306,14 +483,15 @@ class Gui:
                 frame1.grid_propagate(False)
 
                 
-                self.skyline_img = {}
-                self.skyline_img[row] = PhotoImage(file = 'images/Skyline_thumbnail.png')
-                airline_pic = Label(frame1, image = self.skyline_img[row])
+                self.airline_img = {}
+                self.airline_img[row] = PhotoImage(file = f'images/{airline.strip()}_thumbnail.png')
+                airline_pic = Label(frame1, image = self.airline_img[row])
                 airline_pic.grid(column = 1, row = 1, rowspan = 2, padx = (15, 0), pady = 15)
-                airline_pic.photo = self.skyline_img[row]
+                airline_pic.photo = self.airline_img[row]
+
                 
-                airline_label = Label(frame1, text = 'Skyline', bg = 'light blue',
-                font = ('Ariel', 20), fg = 'dark blue')
+                airline_label = Label(frame1, text = airline.replace(' ', '\n', 1),
+                bg = 'light blue', font = ('Ariel', 20), fg = 'dark blue')
                 airline_label.grid(row = 1, column = 2, padx = (10,0), pady = (0, 5), rowspan = 2)
                 
                 from_time_label = Label(frame1, text = time[0] + ':' + time[1],
@@ -336,34 +514,58 @@ class Gui:
                 font = ('Ariel', 15), bg = 'light blue')
                 to_label.grid(row = 2, column = 5, pady = (0, 30))
 
-                price_label = Label(frame1, text = symbol + str(price * self.currency[chosen_cur][1]),
-                bg = 'light blue', font = ('Ariel', 20))
+                price_label = Label(frame1, text = self.symbol +
+                str(price * self.currency[self.chosen_cur][1]), bg = 'light blue', font = ('Ariel', 20))
                 price_label.grid(row  =1, column = 6, rowspan = 2, padx = (60,0))
 
-                book_button = Button(frame1, text = 'Book Flight',
+                def action(x = row):
+                    self.info = info[row]
+                    #print(info[row])
+                    self.booking_details()
+                    
+                button_dict[i] = Button(frame1, text = 'Book Flight', command = action,
                 font = ('Ariel', 15), relief = GROOVE, bg = 'light blue')
-                book_button.grid(row = 1, rowspan = 2, column = 7, padx = (10, 0))
+                button_dict[i].grid(row = 1, rowspan = 2, column = 7, padx = (10, 0))
+
             for i in range(1,random.randint(3,4)):
                 get_flights(i)
                 
+# booking details ====================================================================
     def valid_details(self):
         d = {1: self.name_entry, 2: self.email_entry, 3: self.mobile_entry}
         for i in range(1, 4):
             if i == 1:
-                if not 4 > len(d[i].get().split()) > 1:
+                l_name = d[i].get().split()
+                if not 4 > len(l_name) > 1:
+                    print('full name required')
                     return False
+                    for i in l_name:
+                        if len(i) < 2:
+                            print('name cant be less than 3 chars')
+                            return False
             elif i == 2:
-                if d[i].get().find('@') == -1 or d[i].get()[-4:] != '.com':
+                email = d[i].get()
+                if (email.count('@') != 1 or email[-4:] != '.com'
+                or email.count('.com') != 1):
+                    print('invalid email')
                     return False
             elif i == 3:
                 num = ''.join(str(d[i].get()).split())
-                if len(num) != 10 or not num.isdecimal() :
+                if len(num) != 10 or not num.isdecimal():
+                    print('invalid number')
                     return False
+        self.seat = str(random.randint(1,100)) + random.choice(['a','b','c'])
+        self.sno = sql.sno('ticket')
+        # update
+        values = (self.sno,self.name_entry.get(),self.mobile_entry.get(),self.email_entry.get(),
+        self.from_,self.to_,self.full_date, 'skyline', self.pass_spinbox.get(),self.seat,'2:00','3:00',self.price[1],self.class_spinbox.get())
+        sql.enter_ticket(values)
         return True
 
     # booking details
     def booking_details(self):
         theme = 'light blue'
+        self.price = [self.info[0], self.info[0]]
         for item in self.main_frame.winfo_children():
                 item.destroy()
         frame = Frame(self.main_frame, bg = theme)
@@ -372,16 +574,30 @@ class Gui:
         frame.grid_rowconfigure(8, weight = 1)
 
         def temp(widget, text, mode):
-            if mode == 1 and widget.get() == text:
-                self.add_text(widget, False, 'black')
-            elif widget.get() == '':
-                self.add_text(widget, text, 'grey')
+            var = widget.get()
+            if mode == 1:
+                if var == '':
+                    self.add_text(widget, text, 'grey')
+                elif var == text:
+                    self.add_text(widget, ' ', 'black')
+                else:
+                    if widget.cget('fg') == 'grey':
+                        self.add_text(widget, ' ', 'black')
+                    if len(var) != 0 and var[0] != ' ':
+                        self.add_text(widget, ' ' + var, 'black')
+                    if widget == self.mobile_entry:
+                        no = var.replace(' ', '')
+                        if not no.isdecimal() or len(no) > 10:
+                            self.add_text(widget, var[:-1], 'black')
+                    elif widget == self.name_entry:
+                        if not var.replace(' ', '').isalpha():
+                            self.add_text(widget, var[:-1], 'black')
+                    elif var.count('@') > 1:
+                        self.add_text(widget, var[:-1], 'black')
             elif mode == 2:
-                if len(widget.get()) > 0 and widget.get()[0] != ' ':
-                    self.add_text(widget, ' ' + widget.get(), 'black')
-                if widget == self.mobile_entry and len(self.mobile_entry.get().strip()) == 10:
-                    no = self.mobile_entry.get().strip()
-                    self.add_text(widget,' ' + no[:2] + ' ' + no[2:], 'black')
+                if len(var) == 1:
+                    self.add_text(widget, text, 'grey')
+                    
         main_label = Label(frame, text = 'Booking Details', bg = theme, font = ('Ariel', 25, 'bold'))
         main_label.grid(row = 1, column = 1, padx = (20, 20), pady = (20, 20))
         
@@ -391,6 +607,7 @@ class Gui:
         self.name_entry.grid(row = 2, column = 2, sticky = 'w', padx = (200, 0))
         self.name_entry.bind("<FocusIn>", lambda a: temp(self.name_entry, ' full name', 1))
         self.name_entry.bind("<FocusOut>", lambda a: temp(self.name_entry, ' full name', 2))
+        self.name_entry.bind("<KeyRelease>", lambda a: temp(self.name_entry, ' full name', 1))
         self.name_entry.insert(0, ' full name')
 
         email_label = Label(frame, text = 'Email', bg = theme, font = ('Ariel', 20))
@@ -399,6 +616,7 @@ class Gui:
         self.email_entry.grid(row = 3, column = 2, sticky = 'w', padx = (200, 0))
         self.email_entry.bind("<FocusIn>", lambda a: temp(self.email_entry, ' email', 1))
         self.email_entry.bind("<FocusOut>", lambda a: temp(self.email_entry, ' email', 2))
+        self.email_entry.bind("<KeyRelease>", lambda a: temp(self.email_entry, ' email', 1))
         self.email_entry.insert(0, ' email')
         
         mobile_label = Label(frame, text = 'Mobile number', bg = theme, font = ('Ariel', 20))
@@ -407,24 +625,26 @@ class Gui:
         self.mobile_entry.grid(row = 4, column = 2, sticky = 'w', padx = (200, 0))
         self.mobile_entry.bind("<FocusIn>", lambda a: temp(self.mobile_entry, ' mobile number', 1))
         self.mobile_entry.bind("<FocusOut>", lambda a: temp(self.mobile_entry, ' mobile number', 2))
+        self.mobile_entry.bind("<KeyRelease>", lambda a: temp(self.mobile_entry, ' mobile number', 1))
         self.mobile_entry.insert(0, ' mobile number')
 
         def update_price():
             mul = {' Economy': 1, ' Premium Economy': 1.8, ' Business': 3.8, ' First': 9.3}
-            self.price[1] = round(mul[class_spinbox.get()] * int(pass_spinbox.get()) * self.price[0])
+            self.price[1] = round(mul[self.class_spinbox.get()] * int(self.pass_spinbox.get()) * int(self.price[0]))
             price_label.configure(text = f'Price: {self.symbol}{str(self.price[1])}')
+            
         passengers_label = Label(frame, text = 'Passengers', bg = theme, font = ('Ariel', 20))
         passengers_label.grid(row = 5, column = 1, pady = (0, 5))
-        pass_spinbox = Spinbox(frame, from_ = 1, to = 10,
+        self.pass_spinbox = Spinbox(frame, from_ = 1, to = 10,
         font = ('Ariel', 20), width = 2, command = update_price)
-        pass_spinbox.grid(row = 5, column = 2, sticky = 'w', padx = (200, 0))
+        self.pass_spinbox.grid(row = 5, column = 2, sticky = 'w', padx = (200, 0))
 
         class_label = Label(frame, text = 'Class', bg = theme, font = ('Ariel', 20))
         class_label.grid(row = 6, column = 1, pady = (0, 5))
         classes = [' Economy', ' Premium Economy', ' Business', ' First']
-        class_spinbox = Spinbox(frame, values = classes,
+        self.class_spinbox = Spinbox(frame, values = classes,
         font = ('Ariel', 20), width = 16, command = update_price)
-        class_spinbox.grid(row = 6, column = 2, sticky = 'w', padx = (200, 0))
+        self.class_spinbox.grid(row = 6, column = 2, sticky = 'w', padx = (200, 0))
 
         price_label = Label(frame, text = 'Price: ' + self.symbol + str(self.price[1]),
         font = ('Ariel', 20), bg = theme)
@@ -433,18 +653,30 @@ class Gui:
         book_button = Button(frame, text = 'Book flight', font = ('Ariel', 20), command = self.ticket)
         book_button.grid(row = 8, column = 1, columnspan = 2, pady = (10, 20))
 
+# ticket =========================================================================================
     def ticket(self):
-        #if self.valid_details():
+        if self.valid_details():
             for item in self.main_frame.winfo_children():
                 item.destroy()
             def show_cords(event):
-                print(event.x, event.y)
+                pass
+                #print(event.x, event.y)
             self.board_pass = PhotoImage(file = 'images/Boarding_pass.png')
             canvas = Canvas(self.main_frame, width = 1366, height = 698)
             canvas.grid(row = 1, column = 1)
             canvas.bind('<Button-1>', lambda event: show_cords(event))
             canvas.create_image(0, 0, image = self.board_pass, anchor = NW)
-            canvas.create_text(100, 100, text = 'hello', font = ('Ariel', 20))
+            # test
+            values = sql.ticket_get_values(self.sno)
+            d = {1:(127, 277, values[1]), 2:(127, 353, values[13]), 3:(127, 431, values[4]),
+            4:(127, 507, values[5]), 5:(567, 277, values[6]), 6:(567, 353, 'gate'),
+            7:(567, 431, values[7]), 8:(775, 277, values[11]), 9:(775, 353, values[10]),
+            10:(1055, 239, values[1]), 11:(1055, 284, values[4]), 12:(1055, 330, values[5]),
+            13:(1055, 377, values[6]), 14:(1203, 377, values[10]), 15:(1055, 422, 'gate'),
+            16:(1203, 422, values[9]), 17:(1055, 468, values[7])}
+            for i in range(1, 18):
+                canvas.create_text(d[i][0], d[i][1], text = d[i][2],
+                font = ('Ariel', 20), anchor = W)
             
 mygui = Gui()
 mygui.logo()
