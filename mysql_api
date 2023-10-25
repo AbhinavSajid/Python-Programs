@@ -1,0 +1,94 @@
+import mysql.connector as con
+
+def fetch_countries():
+    mycon = con.connect(host = 'Localhost', user = 'root',password = 'Hariom@123', database = 'project')
+    mycursor = mycon.cursor()
+    qry = 'select countries from country'
+    mycursor.execute(qry)
+    data = mycursor.fetchall()
+    l = [i[0] for i in data]
+    mycon.close()
+    return l
+
+def country_info(cont):
+    mycon = con.connect(host = 'Localhost', user = 'root',password = 'Hariom@123', database = 'project')
+    mycursor = mycon.cursor()
+    qry = f"select * from country where countries = \'{cont}\'"
+    mycursor.execute(qry)
+    data = mycursor.fetchone()
+    mycon.close()
+    return data
+
+def enter_ticket(values):
+    #values = (1, 'a s', '8078072222', '@.com', 'Australia', 'India', '
+    #1st January 2024', 'skyline', '1', '96c', '2:00', '3:00', '54959', ' Economy')
+    mycon = con.connect(host = 'Localhost', user = 'root',password = 'Hariom@123', database = 'project')
+    mycursor = mycon.cursor()
+    qry = f"insert into ticket values{values}"
+    mycursor.execute(qry)
+    mycon.commit()
+    mycon.close()
+
+def del_ticket(x):
+    mycon = con.connect(host = 'Localhost', user = 'root',password = 'Hariom@123', database = 'project')
+    mycursor = mycon.cursor()
+    qry=f'delete from ticket where sno={x}'
+    mycursor.execute(qry)
+    mycon.commit()
+    mycon.close()
+
+def ticket_get_values(x):
+    mycon = con.connect(host = 'Localhost', user = 'root',password = 'Hariom@123', database = 'project')
+    mycursor = mycon.cursor()
+    qry=f'select * from ticket where sno={x}'
+    mycursor.execute(qry)
+    data = mycursor.fetchall()
+    mycon.close()
+    return data[0]
+
+def flight_history(email):
+    mycon = con.connect(host = 'Localhost', user = 'root',password = 'Hariom@123', database = 'project')
+    mycursor = mycon.cursor()
+    qry=f"select * from ticket where email='{email}' order by date desc"
+    mycursor.execute(qry)
+    data = mycursor.fetchall()
+    mycon.close()
+    return data
+
+def sno(table):
+    mycon = con.connect(host = 'Localhost', user = 'root',password = 'Hariom@123', database = 'project')
+    mycursor = mycon.cursor()
+    qry=f'select sno from {table}'
+    mycursor.execute(qry)
+    data = mycursor.fetchall()
+    mycon.close()
+    for i in range(1, 100):
+        if (i,) not in data:
+            return i
+        
+def enter_users(values):
+    mycon = con.connect(host = 'Localhost', user = 'root',password = 'Hariom@123', database = 'project')
+    mycursor = mycon.cursor()
+    qry = f"insert into users values{values}"
+    mycursor.execute(qry)
+    mycon.commit()
+    mycon.close()
+    
+def get_emails():
+    mycon = con.connect(host = 'Localhost', user = 'root',password = 'Hariom@123', database = 'project')
+    mycursor = mycon.cursor()
+    qry = "select email from users"
+    mycursor.execute(qry)
+    data = mycursor.fetchall()
+    l = [i[0] for i in data]
+    mycon.close()
+    return l
+
+def users_get_values(email):
+    mycon = con.connect(host = 'Localhost', user = 'root',password = 'Hariom@123', database = 'project')
+    mycursor = mycon.cursor()
+    qry=f"select * from users where email='{email}'"
+    mycursor.execute(qry)
+    data = mycursor.fetchall()
+    mycon.close()
+    return data[0]
