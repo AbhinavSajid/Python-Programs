@@ -2,7 +2,7 @@ from tkinter import *
 import math
 import time
 import random
-import mysql_api as sql
+import mysql as sql
 
 #window
 window = Tk(screenName=None, baseName=None, className='Tk', useTk=1)
@@ -11,7 +11,7 @@ window.bind('<Escape>', lambda event: window.destroy())
 window.title('Flight booking')
 window.geometry('1366x768')
 window.minsize(960, 540)
-#window.attributes('-fullscreen', True)
+window.attributes('-fullscreen', True)
 
 class Gui:
     def __init__(self):
@@ -34,12 +34,11 @@ class Gui:
         for item in self.main_frame.winfo_children():
             item.destroy()
         canvas = Canvas(self.main_frame)
-        canvas.grid(row = 1, column = 1)
+        canvas.grid(row = 1, column = 1, pady = (40, 0))
         canvas.config(width = 1008, height = 621)
         self.world_image = PhotoImage(file = 'images/World_map.png')
         canvas.create_image(0, 0, anchor = NW, image = self.world_image)
         values = sql.ticket_get_values(sno)
-        #print(values)
         info1 = sql.country_info(values[4])
         info2 = sql.country_info(values[5])
         
@@ -83,8 +82,12 @@ class Gui:
         mins_prefix = '0' if mins < 10 else ''
         time.extend([hrs_prefix + str(hrs), mins_prefix + str(mins), new_day])
         return time
-            
-        return (random.randint(0,23),mins)
+    
+    '''def background_img(self):
+        self.background_img = PhotoImage(file = 'images/Background_img.png')
+        background_label = Label(self.main_frame, image = self.background_img)
+        background_label.place(x = 0, y = 0, anchor = NW)'''
+        
     def add_text(self, widget, text, color):
         widget.delete(0, "end")
         if color is not False:
@@ -241,30 +244,51 @@ class Gui:
         else:
             for item in self.main_frame.winfo_children():
                 item.destroy()
-            self.main_frame.grid_columnconfigure(1, weight = 1)
-            self.main_frame.grid_rowconfigure(2, weight = 1)
             
             theme = '#a631b5'
-            self.frame = Frame(self.main_frame, bg = theme)
-            self.frame.grid(row = 1, column = 1, pady = (60, 0), padx = 170, sticky = 'we')
-            self.frame.grid_columnconfigure(1, weight = 1)
-
+            container2 = Frame(self.main_frame)
+            container2.grid(row = 1, rowspan = 2, column = 1,
+            pady = (60, 40), padx = 170, sticky = 'nsew')
+            container2.grid_columnconfigure(2, weight = 1)
+            container2.grid_rowconfigure(2, weight = 1)
             
+            self.upper_frame = Frame(container2, bg = theme)
+            self.upper_frame.grid(row = 1, column = 1,columnspan = 2, sticky = 'we')
+            self.upper_frame.grid_columnconfigure(1, weight = 1)
             info = sql.users_get_values(self.email)
-            user_label = Label(self.frame, text = info[1], bg = theme,
-            font = ('Ariel', 25, 'bold'),fg='white')
+            
+            user_label = Label(self.upper_frame, text = info[1], bg = theme,
+            font = ('Ariel', 25, 'bold'), fg = 'white')
             user_label.grid(row = 1, column = 1, pady = (20, 0))
-
-            email_label = Label(self.frame,text=info[2],bg=theme,font=('Ariel',17),fg='white')
+            
+            delete_user_button = Button(self.upper_frame, text = 'X', font = ('Ariel', 13), fg = 'red',
+            bg = theme,relief = 'flat', command = lambda: [sql.delete_user(self.email), self.home_page()])
+            delete_user_button.grid(row = 1, column = 1, padx = (980, 0))
+            
+            email_label = Label(self.upper_frame,text=info[2],bg = theme, font = ('Ariel', 17),fg = 'white')
             email_label.grid(row = 2, column = 1)
             
-            history_label = Label(self.frame, text = 'Flight History',
+            history_label = Label(self.upper_frame, text = 'Flight History',
             font = ('Ariel', 20, 'bold'),bg = theme, fg = '#00ffbf')
             history_label.grid(row = 3,column = 1,pady = (50, 10))
 
+            canvas = Canvas(container2, bg = theme, bd = 0, highlightthickness = 0)
+            canvas.grid(row = 2, column = 1,columnspan = 2, sticky = 'nsew')
+            
+            scrollbar = Scrollbar(container2, orient = VERTICAL, command = canvas.yview)
+            scrollbar.grid(row = 2, column = 2, sticky = 'nse')
+            
+            canvas.configure(yscrollcommand = scrollbar.set)
+            canvas.bind(
+            '<Configure>', lambda e: canvas.configure(scrollregion = canvas.bbox("all")))
+
+            self.frame = Frame(canvas, width = 1000, height = 100, bg = theme)
+            canvas.create_window((0, 0), window = self.frame, anchor = "nw")
+            
             values = sql.flight_history(self.email)
             ticket_button = {}
             route_button = {}
+            delete_button = {}
             pady = 0
             for i in range(len(values)):
                 value = values[i]
@@ -272,7 +296,7 @@ class Gui:
                 if i == len(values) - 1:
                     pady = 40
                 frame1 = Frame(self.frame, bg = theme, height = 130)
-                frame1.grid(row = 4 + i,column = 1, pady = (20, pady))
+                frame1.grid(row = 4 + i,column = 1, pady = (20, pady), padx = (60, 0))
                 
                 date_label = Label(frame1, bg = theme, text = value[6], font = ('Ariel', 20))
                 date_label.grid(row = 1, column = 1, rowspan = 2, padx = 15)
@@ -303,9 +327,12 @@ class Gui:
                     self.sno = values[x][0]
                     if mode == 1:
                         self.ticket('verified')
-                    else:
+                    elif mode == 2:
                         self.travel_map(self.sno)
-                    
+                    elif mode == 3:
+                        sql.delete_ticket(self.sno)
+                        self.account()
+                        
                 ticket_button[i] = Button(frame1, text = 'Ticket', font = ('Ariel', 13),
                 bg = theme, command = action, width = 10)
                 ticket_button[i].grid(column = 7, row = 1, padx = (20, 35), pady = (20, 0))
@@ -313,6 +340,10 @@ class Gui:
                 route_button[i] = Button(frame1, text = 'Flight route', font = ('Ariel', 13),
                 bg = theme, command = lambda: action(mode = 2), width = 10)
                 route_button[i].grid(column = 7, row = 2, padx = (20, 35), pady = (0, 20))
+
+                delete_button[i] = Button(frame1, text = 'X', font = ('Ariel', 13), fg = 'red',
+                bg = theme, command = lambda: action(mode = 3), relief = 'groove')
+                delete_button[i].grid(column = 8, row = 1, pady = (0, 20), padx = (0, 10))
                 
 # tab ===============================================================================================
     def menubar(self):       
@@ -339,10 +370,9 @@ class Gui:
 
         self.main_frame = Frame(self.container)
         self.main_frame.grid(row = 2, column = 1, sticky = 'nsew')
-        self.main_frame.grid_propagate(False)
         self.main_frame.grid_columnconfigure(1, weight = 1)
         self.main_frame.grid_rowconfigure(2, weight = 1)
-        
+
         airline = Label(self.tab, text = 'Skyline', fg = 'white',
         bg = 'blue', font = ('Ariel', 25))
         airline.grid(row = 1, column = 2)
@@ -386,10 +416,11 @@ class Gui:
     def home_page(self):
         for item in self.main_frame.winfo_children():
             item.destroy()
-
+            
+        #self.background_img()
         self.sunset_image = PhotoImage(file = 'images/Airplane_sunset.png')
-        self.display = Label(self.main_frame, image = self.sunset_image, height = 550)
-        self.display.grid(row = 2, column = 1, pady = (10,0), sticky = 'we', padx = 110)
+        display = Label(self.main_frame, image = self.sunset_image)
+        display.grid(row = 2, column = 1, pady = (10,0), sticky = 'we', padx = 110)
 
 # booking ===============================================================================
     def pick_date(self):
@@ -642,7 +673,7 @@ class Gui:
             for i in range(1,random.randint(3,4)):
                 get_flights(i)
                 
-# booking details ====================================================================
+# booking details ====================================================================================
     def valid_details(self):
         theme = 'light blue'
         for item in self.frame.winfo_children():
@@ -795,12 +826,14 @@ class Gui:
             canvas.grid(row = 1, column = 1)
             canvas.bind('<Button-1>', lambda event: show_cords(event))
             canvas.create_image(0, 0, image = self.board_pass, anchor = NW)
-            values = sql.ticket_get_values(self.sno)[0]
+            values = sql.ticket_get_values(self.sno)
+            date = str(values[14])
             d = {1:(127, 277, values[1]), 2:(127, 353, values[13]), 3:(127, 431, values[4]),
-            4:(127, 507, values[5]), 5:(567, 277, values[14]), 6:(567, 353, 'gate'),
-            7:(567, 431, values[7]), 8:(775, 277, values[10]), 9:(775, 353, values[9]),
-            10:(1055, 239, values[1]), 11:(1055, 284, values[4]), 12:(1055, 330, values[5]),
-            13:(1045, 377, values[14][:-3]), 14:(1203, 377, values[10]), 15:(1055, 422, 'gate'),
+            4:(127, 507, values[5]), 5:(567, 277, f'{date[8:]}-{date[5:7]}-{date[2:4]}'),
+            6:(567, 353, 'gate'), 7:(567, 431, values[7]), 8:(775, 277, values[10]),
+            9:(775, 353, values[9]), 10:(1055, 239, values[1]), 11:(1055, 284, values[4]),
+            12:(1055, 330, values[5]), 13:(1045, 377, f'{date[8:]}-{date[5:7]}'),
+            14:(1203, 377, values[10]), 15:(1055, 422, 'gate'),
             16:(1203, 422, values[9]), 17:(1055, 468, values[7])}
             for i in range(1, 18):
                 canvas.create_text(d[i][0], d[i][1], text = d[i][2],
