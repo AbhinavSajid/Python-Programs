@@ -1,0 +1,2 @@
+insert into contry values(6, 'Usa', 'California', 'Los Angeles International Airport', 36.77, -119.41);
+insert into contry values(7, 'Argentina', 'Buenos Aires', 'Ezeiza International Airport', -34.60, -58.38);
