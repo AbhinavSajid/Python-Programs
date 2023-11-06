@@ -2,7 +2,7 @@ from tkinter import *
 import math
 import time
 import random
-import mysql as sql
+import mysql_api as sql
 
 #window
 window = Tk(screenName=None, baseName=None, className='Tk', useTk=1)
@@ -83,10 +83,10 @@ class Gui:
         time.extend([hrs_prefix + str(hrs), mins_prefix + str(mins), new_day])
         return time
     
-    '''def background_img(self):
+    def background(self):
         self.background_img = PhotoImage(file = 'images/Background_img.png')
-        background_label = Label(self.main_frame, image = self.background_img)
-        background_label.place(x = 0, y = 0, anchor = NW)'''
+        background_label = Label(self.main_frame, image = self.background_img, bd = 0)
+        background_label.place(x = 0, y = 0, anchor = NW)
         
     def add_text(self, widget, text, color):
         widget.delete(0, "end")
@@ -95,6 +95,18 @@ class Gui:
         if text is not False:
             widget.insert(0, text)
 
+    def animation(self, file, frame_count, widget):
+        frames = [PhotoImage(file = file,format = f'gif -index {i}') for i in range(frame_count)]
+        count = 0
+        def animate(count):
+            img = frames[count]
+            widget.configure(image = img)
+            count += 1
+            if count == frame_count:
+                count = 0
+            window.after(100, animate, count)
+        animate(0)
+        
 # startup logo ======================================================================        
     def logo(self):
         self.container = Frame(window)
@@ -114,6 +126,9 @@ class Gui:
     def valid_user(self, mode):
         theme='light blue'
         entered_email = self.email_entry.get().strip().lower()
+        for item in self.frame1.winfo_children():
+            if item.grid_info()['column'] == 3:
+                item.destroy()
         if mode == 'sign_up':
             if entered_email not in sql.get_emails():
                 if 9 > len(self.pass_entry.get()) > 3:
@@ -121,15 +136,22 @@ class Gui:
                     self.pass_entry.get())
                     sql.enter_users(values)
                     self.home_page()
+            else:
+                error_label = Label(self.frame1, text = 'email in use', bg = theme, fg = 'red')
+                error_label.grid(row = 3, column = 3)
+                
         else:
             if entered_email in sql.get_emails():
                 if self.pass_entry.get().strip() == sql.users_get_values(self.email_entry.get().strip())[3]:
                     self.email = entered_email
-                    self.home_page()
+                    self.account()
                 else:
-                    error_label=Label(self.frame1,text='incorrect password', bg=theme,fg='red')
-                    error_label.grid(row=3,column=3)
-                    
+                    error_label=Label(self.frame1, text='incorrect password', bg = theme, fg = 'red')
+                    error_label.grid(row = 3, column = 3)
+            else:
+                error_label=Label(self.frame1, text = 'sign up', bg = theme, fg = 'red')
+                error_label.grid(row = 2, column = 3)
+                
     def login_page(self, mode = 'login'):
         def temp(widget, text, mode):
             var = widget.get()
@@ -145,7 +167,7 @@ class Gui:
                     if var.count('@') > 1:
                         self.add_text(widget, var[:-1], 'black')
                 elif widget == self.user_entry:
-                    if not (var[-1].isdecimal() or var[-1].isalpha()):
+                    if len(var) != 0 and not (var[-1].isdecimal() or var[-1].isalpha()):
                         if var[:-1] != text:
                             self.add_text(widget, var[:-1], 'black')
                         else:
@@ -178,6 +200,9 @@ class Gui:
                     self.add_text(widget, text, 'grey')
         for item in self.main_frame.winfo_children():
             item.destroy()
+            
+        self.background()
+        
         theme = 'light blue'
         self.frame1 = Frame(self.main_frame, bg = theme)
         self.frame1.grid(row = 1, column = 1, padx = 170, pady = (90, 0), sticky = 'we')
@@ -237,13 +262,45 @@ class Gui:
         command = lambda: self.valid_user(mode))
         login_button.grid(row = 5 + row, column = 1, columnspan = 3, pady = (30, 40))
         
-# account ================================================================================        
+# account ================================================================================
+    def confirmation(self, mode):
+        confirmation_frame = Frame(self.main_frame, height = 120, width = 300)
+        confirmation_frame.place(relx = 0.5, rely = 0.5, anchor = 'center')
+        confirmation_frame.grid_columnconfigure(2, weight = 1)
+        confirmation_frame.grid_rowconfigure(2, weight = 1)
+        confirmation_frame.grid_propagate(False)
+        
+        text = 'Confirm cancel flight' if mode == 1 else 'Confirm delete user'
+        
+        text_label = Label(confirmation_frame, text = text, font = ('Ariel', 20))
+        text_label.grid(row = 1, column = 1, columnspan = 2, padx = (10, 10), pady = (10, 10))
+
+        def choice(ch):
+            if ch == 'no':
+                self.account()
+            else:
+                if mode == 1:
+                    sql.delete_ticket(self.sno)
+                    self.account()
+                else:
+                    sql.delete_user(self.email)
+                    self.home_page()
+        no_button = Button(confirmation_frame, text = 'No', bg = 'blue', fg = 'white',
+        font = ('Ariel', 14), command = lambda: choice('no'))
+        no_button.grid(row = 2, column = 1, padx = (60, 0), pady = (0, 10))
+
+        yes_button = Button(confirmation_frame, text = 'Yes', bg = 'grey', fg = 'white',
+        font = ('Ariel', 14), command = lambda: choice('yes'))
+        yes_button.grid(row = 2, column = 2,padx = (20, 0), pady = (0, 10))
+        
     def account(self):
         if self.email == '':
             self.login_page('sign_up')
         else:
             for item in self.main_frame.winfo_children():
                 item.destroy()
+
+            self.background()
             
             theme = '#a631b5'
             container2 = Frame(self.main_frame)
@@ -262,7 +319,7 @@ class Gui:
             user_label.grid(row = 1, column = 1, pady = (20, 0))
             
             delete_user_button = Button(self.upper_frame, text = 'X', font = ('Ariel', 13), fg = 'red',
-            bg = theme,relief = 'flat', command = lambda: [sql.delete_user(self.email), self.home_page()])
+            bg = theme,relief = 'flat', command = lambda: confirmation(2))
             delete_user_button.grid(row = 1, column = 1, padx = (980, 0))
             
             email_label = Label(self.upper_frame,text=info[2],bg = theme, font = ('Ariel', 17),fg = 'white')
@@ -284,12 +341,17 @@ class Gui:
 
             self.frame = Frame(canvas, width = 1000, height = 100, bg = theme)
             canvas.create_window((0, 0), window = self.frame, anchor = "nw")
-            
             values = sql.flight_history(self.email)
+            values = []
             ticket_button = {}
             route_button = {}
             delete_button = {}
             pady = 0
+            if len(values) == 0:
+                text_label = Label(self.frame, text = 'No flights are currently booked',
+                font = ('Ariel', 20), bg = theme, fg = 'white')
+                text_label.place(relx = 0.51, rely = 1, anchor = 'center')
+                
             for i in range(len(values)):
                 value = values[i]
                 theme = 'light blue'
@@ -330,8 +392,7 @@ class Gui:
                     elif mode == 2:
                         self.travel_map(self.sno)
                     elif mode == 3:
-                        sql.delete_ticket(self.sno)
-                        self.account()
+                        self.confirmation(1)
                         
                 ticket_button[i] = Button(frame1, text = 'Ticket', font = ('Ariel', 13),
                 bg = theme, command = action, width = 10)
@@ -381,20 +442,9 @@ class Gui:
         font = ('Ariel', 10, 'bold'), fg = 'white', bg = 'blue')
         slogan.grid(row=1,column=3,padx=5,pady=(0,5))
 
-        file = 'images/Globe_logo.gif'
-        frame_count = 120
-        frames = [PhotoImage(file = file,format = f'gif -index {i}') for i in range(frame_count)]
-        count = 0
         logo_label = Label(self.tab, image = '', bg = 'blue')
         logo_label.grid(column = 1, row = 1, padx = (10,0))
-        def animation(count):
-            img = frames[count]
-            logo_label.configure(image = img)
-            count += 1
-            if count == frame_count:
-                count = 0
-            window.after(100, animation, count)
-        animation(0)
+        self.animation('images/Globe_logo.gif', 120, logo_label)
         
         home = Button(self.tab, text = 'Home page', bg = 'blue', fg = 'white', height = 1,
         relief = 'flat', font = ('Ariel', 12), command = self.home_page)
@@ -417,10 +467,15 @@ class Gui:
         for item in self.main_frame.winfo_children():
             item.destroy()
             
-        #self.background_img()
+        self.background()
+
+        self.slogan_image = PhotoImage(file = 'images/slogan.png')
+        slogan_label = Label(self.main_frame, image = self.slogan_image, bd = 0)
+        slogan_label.grid(row = 1, column = 1, pady = (30, 0))
+        
         self.sunset_image = PhotoImage(file = 'images/Airplane_sunset.png')
-        display = Label(self.main_frame, image = self.sunset_image)
-        display.grid(row = 2, column = 1, pady = (10,0), sticky = 'we', padx = 110)
+        display = Label(self.main_frame, image = self.sunset_image, bd = 0)
+        display.grid(row = 2, column = 1, pady = (0,0))
 
 # booking ===============================================================================
     def pick_date(self):
@@ -495,6 +550,9 @@ class Gui:
     def book_flight(self):
         for item in self.main_frame.winfo_children():
             item.destroy()
+
+        self.background()
+        
         frame = Frame(self.main_frame, bg = 'grey', height = 200)
         frame.grid(row = 1, column = 1, pady = (100, 0), sticky = 'we', padx = 110)
         frame.grid_columnconfigure(1, weight = 1)
@@ -585,6 +643,10 @@ class Gui:
         
         search = Button(self.tab2, text = 'Search', height = 2, width = 10, command = self.search_flights)
         search.grid(row = 1, column = 4, padx = (30,0), pady = (40,0))
+
+        self.slogan_image = PhotoImage(file = 'images/slogan2.png')
+        slogan_label = Label(self.main_frame, image = self.slogan_image, bd = 0)
+        slogan_label.grid(row = 2, column = 1, pady = (30, 0))
         
         if self.full_date != '':
             self.add_text(self.travel_date_entry, self.full_date, 'black')
@@ -598,6 +660,9 @@ class Gui:
         if self.travel_date_entry.winfo_exists() and self.valid_date() and self.valid_destination():
             for item in self.main_frame.winfo_children():
                 item.destroy()
+
+            self.background()
+            
             self.main_frame.grid_rowconfigure(4, weight = 1)
             self.main_frame.grid_columnconfigure(1, weight = 1)
             button_dict = {}
@@ -626,14 +691,12 @@ class Gui:
                 frame1.grid(row = row + 1, column = 1, sticky = 'we', padx = 150, pady = (pady, 0))
                 frame1.grid_propagate(False)
 
-                
                 self.airline_img = {}
                 self.airline_img[row] = PhotoImage(file = f'images/{airline.strip()}_thumbnail.png')
                 airline_pic = Label(frame1, image = self.airline_img[row])
                 airline_pic.grid(column = 1, row = 1, rowspan = 2, padx = (15, 0), pady = 15)
                 airline_pic.photo = self.airline_img[row]
 
-                
                 airline_label = Label(frame1, text = airline.replace(' ', '\n', 1),
                 bg = theme, font = ('Ariel', 20), fg = 'dark blue')
                 airline_label.grid(row = 1, column = 2, padx = (10,0), pady = (0, 5), rowspan = 2)
@@ -677,7 +740,7 @@ class Gui:
     def valid_details(self):
         theme = 'light blue'
         for item in self.frame.winfo_children():
-            if item.grid_location(0, 0)[0] == 3:
+            if item.grid_info()['column'] == 3:
                 item.destroy()
         d = {1: self.name_entry, 2: self.email_entry, 3: self.mobile_entry}
         for i in range(1, 4):
@@ -686,7 +749,7 @@ class Gui:
                 def wrong_name():
                     error_label = Label(self.frame, text = 'enter valid full name', bg = theme, fg = 'red')
                     error_label.grid(row = 2, column = 3)
-                if not 4 > len(l_name) > 1:
+                if not 4 > len(l_name) > 1 or ''.join(l_name) == 'fullname':
                     wrong_name()
                     return False
                 for i in l_name:
@@ -720,8 +783,10 @@ class Gui:
         self.price = [self.info[0], self.info[0]]
         for item in self.main_frame.winfo_children():
                 item.destroy()
+
+        self.background()
         self.frame = Frame(self.main_frame, bg = theme)
-        self.frame.grid(row = 1, column = 1, sticky = 'we', padx = 130, pady = (30, 0))
+        self.frame.grid(row = 1, column = 1, sticky = 'we', padx = 130, pady = (60, 0))
         self.frame.grid_columnconfigure(3, weight = 1)
         self.frame.grid_rowconfigure(8, weight = 1)
 
@@ -757,20 +822,21 @@ class Gui:
                 if len(var) == 1:
                     self.add_text(widget, text, 'grey')
                     
-        main_label = Label(self.frame, text = 'Booking Details', bg = theme, font = ('Ariel', 25, 'bold'))
-        main_label.grid(row = 1, column = 1, padx = (20, 20), pady = (20, 20))
+        main_label = Label(self.frame, text = 'Booking Details', bg = '#a631b5',
+        font = ('Ariel', 25, 'bold'), fg = 'white')
+        main_label.grid(row = 1, column = 1, columnspan = 3, sticky = 'we', ipady = 10)
         
         name_label = Label(self.frame, text = 'Full name', font = ('Ariel', 20), bg = theme)
-        name_label.grid(row = 2, column = 1, pady = (0, 5))
+        name_label.grid(row = 2, column = 1, pady = (20, 5), padx = (10, 0))
         self.name_entry = Entry(self.frame, font = ('Ariel', 20), fg = 'grey', width = 30)
-        self.name_entry.grid(row = 2, column = 2, sticky = 'w', padx = (200, 0))
+        self.name_entry.grid(row = 2, column = 2, sticky = 'w', padx = (200, 0), pady = (20, 5))
         self.name_entry.bind("<FocusIn>", lambda a: temp(self.name_entry, ' full name', 1))
         self.name_entry.bind("<FocusOut>", lambda a: temp(self.name_entry, ' full name', 2))
         self.name_entry.bind("<KeyRelease>", lambda a: temp(self.name_entry, ' full name', 1))
         self.name_entry.insert(0, ' full name')
 
         email_label = Label(self.frame, text = 'Email', bg = theme, font = ('Ariel', 20))
-        email_label.grid(row = 3, column = 1, pady = (0, 5))
+        email_label.grid(row = 3, column = 1, pady = (0, 5), padx = (10, 0))
         self.email_entry = Entry(self.frame, font = ('Ariel', 20), fg = 'grey', width = 30)
         self.email_entry.grid(row = 3, column = 2, sticky = 'w', padx = (200, 0))
         self.email_entry.bind("<FocusIn>", lambda a: temp(self.email_entry, ' email', 1))
@@ -779,7 +845,7 @@ class Gui:
         self.email_entry.insert(0, ' email')
         
         mobile_label = Label(self.frame, text = 'Mobile number', bg = theme, font = ('Ariel', 20))
-        mobile_label.grid(row = 4, column = 1, pady = (0, 5))
+        mobile_label.grid(row = 4, column = 1, pady = (0, 5), padx = (10, 0))
         self.mobile_entry = Entry(self.frame, font = ('Ariel', 20), fg = 'grey')
         self.mobile_entry.grid(row = 4, column = 2, sticky = 'w', padx = (200, 0))
         self.mobile_entry.bind("<FocusIn>", lambda a: temp(self.mobile_entry, ' mobile number', 1))
@@ -793,13 +859,13 @@ class Gui:
             price_label.configure(text = f'Price: {self.symbol}{str(self.price[1])}')
             
         passengers_label = Label(self.frame, text = 'Passengers', bg = theme, font = ('Ariel', 20))
-        passengers_label.grid(row = 5, column = 1, pady = (0, 5))
+        passengers_label.grid(row = 5, column = 1, pady = (0, 5), padx = (10, 0))
         self.pass_spinbox = Spinbox(self.frame, from_ = 1, to = 10,
         font = ('Ariel', 20), width = 2, command = update_price)
         self.pass_spinbox.grid(row = 5, column = 2, sticky = 'w', padx = (200, 0))
 
         class_label = Label(self.frame, text = 'Class', bg = theme, font = ('Ariel', 20))
-        class_label.grid(row = 6, column = 1, pady = (0, 5))
+        class_label.grid(row = 6, column = 1, pady = (0, 5), padx = (10, 0))
         classes = [' Economy', ' Premium Economy', ' Business', ' First']
         self.class_spinbox = Spinbox(self.frame, values = classes,
         font = ('Ariel', 20), width = 16, command = update_price)
@@ -808,10 +874,10 @@ class Gui:
         price_label = Label(self.frame, text = 'Price: ' + self.symbol +
         str(self.price[1] * self.currency[self.chosen_cur][1]),
         font = ('Ariel', 20), bg = theme)
-        price_label.grid(row = 7, column = 1, pady = (0, 5))
+        price_label.grid(row = 7, column = 1, pady = (0, 5), padx = (10, 0))
         
         book_button = Button(self.frame, text = 'Book flight', font = ('Ariel', 20), command = self.ticket)
-        book_button.grid(row = 8, column = 1, columnspan = 2, pady = (10, 20))
+        book_button.grid(row = 8, column = 1, columnspan = 3, pady = (10, 20))
 
 # ticket =========================================================================================
     def ticket(self, mode = 'verify'):
