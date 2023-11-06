@@ -1,2 +1,7 @@
 insert into contry values(6, 'Usa', 'California', 'Los Angeles International Airport', 36.77, -119.41);
 insert into contry values(7, 'Argentina', 'Buenos Aires', 'Ezeiza International Airport', -34.60, -58.38);
+
+canvas.create_text(info1[5] * (41.954/15), -info1[4] *(51.6/15), text = values[4],
+font = ('Ariel', 20), anchor = S)
+canvas.create_text(info2[5] * (41.954/15), -info2[4] *(51.6/15), text = values[5],
+font = ('Ariel', 20), anchor = S)
