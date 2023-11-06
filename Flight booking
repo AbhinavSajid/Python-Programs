@@ -350,7 +350,7 @@ class Gui:
             if len(values) == 0:
                 text_label = Label(self.frame, text = 'No flights are currently booked',
                 font = ('Ariel', 20), bg = theme, fg = 'white')
-                text_label.place(relx = 0.51, rely = 1, anchor = 'center')
+                text_label.place(relx = 0.51, rely = 0.9, anchor = 'center')
                 
             for i in range(len(values)):
                 value = values[i]
