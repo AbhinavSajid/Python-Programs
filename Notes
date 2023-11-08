@@ -5,3 +5,4 @@ canvas.create_text(info1[5] * (41.954/15), -info1[4] *(51.6/15), text = values[4
 font = ('Ariel', 20), anchor = S)
 canvas.create_text(info2[5] * (41.954/15), -info2[4] *(51.6/15), text = values[5],
 font = ('Ariel', 20), anchor = S)
+https://www.canva.com/design/DAFzl_4YbnE/YoGHNGQhaIb60TY3ECb3dg/edit?utm_content=DAFzl_4YbnE&utm_campaign=designshare&utm_medium=lnk2&utm_source=sharebutton
