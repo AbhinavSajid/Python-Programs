@@ -16,7 +16,7 @@ disease_dict = {'Cold': [[], 'Acetaminophen', 70], 'Fever': [[], 'Paracetamol', 
 
 class Gui:
     def init(self):
-        self.paid = 0
+        pass
 
     def logo_page(self):
         theme = '#addbff'
@@ -151,7 +151,7 @@ class Gui:
             medicine_label = Label(frame1, text=disease_dict[i][1], font=('Ariel', 30))
             medicine_label.grid(row=selected.index(i) + 2, column=3)
 
-            def update_price(pl, quantity):
+            def update_price(pl, quantity, i):
                 price = '₹' + str(int(quantity.get()) * disease_dict[i][2])
                 pl.config(text=price)
                 disease_dict[i][0] = [int(quantity.get())]
@@ -167,7 +167,7 @@ class Gui:
             price_dict[i].grid(row=selected.index(i) + 2, column=5)
 
             quantity_dict[i] = Spinbox(frame1, from_=1, to=10, font=('Ariel', 30),
-                                       width=2, command=lambda d=i: update_price(price_dict[d], quantity_dict[d]))
+                                       width=2, command=lambda d=i: update_price(price_dict[d], quantity_dict[d], d))
             quantity_dict[i].grid(row=selected.index(i) + 2, column=4)
 
             total_label = Label(frame1, font=('Ariel', 30))
@@ -197,6 +197,7 @@ class Gui:
         frame1.grid_rowconfigure(list(range(1, len(selected) + 3)), weight=1)
 
         for i in selected:
+            self.paid = 0
             sno_label = Label(frame1, text=f"{selected.index(i) + 1}.", font=('Ariel', 30))
             sno_label.grid(row=selected.index(i) + 2, column=1)
 
@@ -242,6 +243,10 @@ class Gui:
         continue_button.grid(row=1, column=1, pady=100)
         continue_button.after(4000, self.logo_page)
 
+        continue_label = Label(self.background_label, text='Health is wealth',
+                               font=('Ariel', 50), bg='#addbff', fg='black')
+        continue_label.grid(row=2, column=1, pady=100)
+
         self.timer = Label(self.background_label)
         self.timer.after(6000, self.logo_page)
 
@@ -249,3 +254,4 @@ class Gui:
 mygui = Gui()
 mygui.logo_page()
 window.mainloop()
+
