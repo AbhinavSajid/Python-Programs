@@ -353,28 +353,8 @@ def computer():
             for square1 in opp_pieces:
                 if board[square1][0] == turn:
                     for move1 in piece_moves(square[0],square[1],checked_squares(turn)):
-                        
-        
-        
-                
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-end = timer()
-print(end - start)
+                      end = timer()
+                      print(end - start)
     
 
 
